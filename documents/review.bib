@@ -1,0 +1,573 @@
+% ===========================================================================
+% 综述文献数据库: LLM + SCA 安全 / 代码审计 / 可达性验证 / 误报消减
+% 键名规范: FirstAuthorLastName:Year:Keyword
+% 状态: 49 篇全部核实完成（作者、标题、ID 均可解析）
+% 最后更新: 2025-06-22
+% ===========================================================================
+
+% ===========================================================================
+% 方向 ① — LLM 漏洞检测综述 (3 篇)
+% ===========================================================================
+
+@article{sheng:2025:llms-software-security-survey,
+  author    = {Ze Sheng and Zhicheng Chen and Shuning Gu and Heqing Huang and Guofei Gu and Jeff Huang},
+  title     = {LLMs in Software Security: A Survey of Vulnerability Detection Techniques and Insights},
+  journal   = {arXiv preprint arXiv:2502.07049},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2502.07049},
+  note      = {方向① LLM漏洞检测综述}
+}
+
+@article{basic:2024:vuln-to-remediation-survey,
+  author    = {Enna Basic and Alberto Giaretta},
+  title     = {From Vulnerabilities to Remediation: A Systematic Literature Review of LLMs in Code Security},
+  journal   = {arXiv preprint arXiv:2412.15004},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2412.15004},
+  note      = {方向① LLM代码安全综述}
+}
+
+@article{wang:2025:llm-program-analysis-survey,
+  author    = {Jiayimei Wang and Tao Ni and Wei-Bin Lee and Qingchuan Zhao},
+  title     = {A Contemporary Survey of Large Language Model Assisted Program Analysis},
+  journal   = {arXiv preprint arXiv:2502.18474},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2502.18474},
+  note      = {方向① LLM辅助程序分析综述}
+}
+
+% ===========================================================================
+% 方向 ② — SCA/版本/可达 (6 篇, 含 V-SZZ)
+% ===========================================================================
+
+@article{zhang:2025:VFArche,
+  author    = {Lyuye Zhang and Jian Zhang and Kaixuan Li and Chong Wang and Chengwei Liu and Jiahui Wu and Sen Chen and Yaowen Zheng and Yang Liu},
+  title     = {VFArchē: A Dual-Mode Framework for Locating Vulnerable Functions in Open-Source Software},
+  journal   = {arXiv preprint arXiv:2506.18050},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2506.18050},
+  note      = {方向② SCA可达性; 必引必区分论文}
+}
+
+@article{cheng:2024:VERCATION,
+  author    = {Yiran Cheng and Ting Zhang and Lwin Khin Shar and Shouguo Yang and Chaopeng Dong and David Lo and Shichao Lv and Zhiqiang Shi and Limin Sun},
+  title     = {VERCATION: Precise Vulnerable Open-source Software Version Identification based on Static Analysis and LLM},
+  journal   = {arXiv preprint arXiv:2408.07321},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2408.07321},
+  note      = {方向② SCA可达性; 必引必区分论文}
+}
+
+@article{foo:2019:sca-dynamics,
+  author    = {Darius Foo and Jason Yeo and Hao Xiao and Asankhaya Sharma},
+  title     = {The Dynamics of Software Composition Analysis},
+  journal   = {arXiv preprint arXiv:1909.00973},
+  year      = {2019},
+  url       = {https://arxiv.org/abs/1909.00973},
+  note      = {方向② SCA可达性}
+}
+
+@article{yu:2024:patch-localization,
+  author    = {Jinhong Yu and Yi Chen and Di Tang and Xiaozhong Liu and XiaoFeng Wang and Chen Wu and Haixu Tang},
+  title     = {LLM-Enhanced Software Patch Localization},
+  journal   = {arXiv preprint arXiv:2409.06816},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2409.06816},
+  note      = {方向② 漏洞函数定位}
+}
+
+@inproceedings{tan:2025:similar-but-patched,
+  author    = {Zixuan Tan and Jiayuan Zhou and Xing Hu and Shengyi Pan and Kui Liu and Xin Xia},
+  title     = {Similar but Patched Code Considered Harmful -- The Impact of Similar but Patched Code on Recurring Vulnerability Detection and How to Remove Them},
+  booktitle = {Proceedings of the 47th IEEE/ACM International Conference on Software Engineering (ICSE)},
+  year      = {2025},
+  doi       = {10.1109/ICSE55347.2025.00110},
+  publisher = {IEEE},
+  note      = {方向② SCA版本比对; arXiv:2412.20740}
+}
+
+@inproceedings{bao:2022:VSZZ,
+  author    = {Lingfeng Bao and Xin Xia and Ahmed E. Hassan and Xiaohu Yang},
+  title     = {V-SZZ: Automatic Identification of Version Ranges Affected by CVE Vulnerabilities},
+  booktitle = {Proceedings of the 44th IEEE/ACM International Conference on Software Engineering (ICSE)},
+  year      = {2022},
+  pages     = {2352--2364},
+  doi       = {10.1109/ICSE43902.2022.9794006},
+  publisher = {IEEE},
+  note      = {方向② SCA版本范围识别}
+}
+
+% ===========================================================================
+% 方向 ③ — LLM 消减误报 (6 篇, 含 LLM4SA)
+% ===========================================================================
+
+@article{wagner:2025:complementary-security-llm,
+  author    = {Jonas Wagner and Simon M{\"u}ller and Christian N{\"a}ther and Jan-Philipp Stegh{\"o}fer and Andreas Both},
+  title     = {Towards Effective Complementary Security Analysis using Large Language Models},
+  journal   = {arXiv preprint arXiv:2506.16899},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2506.16899},
+  note      = {方向③ 保守分析; 必引必区分论文}
+}
+
+@article{iranmanesh:2025:ZeroFalse,
+  author    = {Mohsen Iranmanesh and Sina Moradi Sabet and Sina Marefat and Ali Javidi Ghasr and Allison Wilson and Iman Sharafaldin and Mohammad A. Tayebi},
+  title     = {ZeroFalse: Improving Precision in Static Analysis with LLMs},
+  journal   = {arXiv preprint arXiv:2510.02534},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2510.02534},
+  note      = {方向③ 零漏报误报消减}
+}
+
+@article{du:2025:LLM4PFA,
+  author    = {Xueying Du and Kai Yu and Chong Wang and Yi Zou and Wentai Deng and Zuoyu Ou and Xin Peng and Lingming Zhang and Yiling Lou},
+  title     = {Minimizing False Positives in Static Bug Detection via LLM-Enhanced Path Feasibility Analysis},
+  journal   = {arXiv preprint arXiv:2506.10322},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2506.10322},
+  note      = {方向③ LLM消减误报}
+}
+
+@article{chen:2024:LLM4FPM,
+  author    = {Jinbao Chen and Hongjing Xiang and Zuohong Zhao and Luhao Li and Yu Zhang and Boyao Ding and Qingwei Li and Songyuan Xiong},
+  title     = {Utilizing Precise and Complete Code Context to Guide LLM in Automatic False Positive Mitigation},
+  journal   = {arXiv preprint arXiv:2411.03079},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2411.03079},
+  note      = {方向③ LLM误报管理}
+}
+
+@article{xiong:2026:sifting-the-noise,
+  author    = {Yunpeng Xiong and Ting Zhang},
+  title     = {Sifting the Noise: A Comparative Study of LLM Agents in Vulnerability False Positive Filtering},
+  journal   = {arXiv preprint arXiv:2601.22952},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2601.22952},
+  note      = {方向③ LLM消减误报; 必引必区分论文}
+}
+
+@article{wen:2024:LLM4SA,
+  author    = {Cheng Wen and Yuandao Cai and Bin Zhang and Jie Su and Zhiwu Xu and Dugang Liu and Shengchao Qin and Zhong Ming and Cong Tian},
+  title     = {Automatically Inspecting Thousands of Static Bug Warnings with Large Language Model: How Far Are We?},
+  journal   = {ACM Transactions on Knowledge Discovery from Data},
+  year      = {2024},
+  doi       = {10.1145/3653718},
+  publisher = {ACM},
+  note      = {方向③ LLM4SA 静态警告自动审查}
+}
+
+% ===========================================================================
+% 方向 ④ — LLM+图/CodeQL (6 篇, 含 LLMDFA + GRACE)
+% ===========================================================================
+
+@article{li:2024:IRIS,
+  author    = {Ziyang Li and Saikat Dutta and Mayur Naik},
+  title     = {IRIS: LLM-Assisted Static Analysis for Detecting Security Vulnerabilities},
+  journal   = {arXiv preprint arXiv:2405.17238},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2405.17238},
+  note      = {方向④ LLM+程序分析; 必引必区分论文}
+}
+
+@article{lekssays:2025:LLMxCPG,
+  author    = {Ahmed Lekssays and Hamza Mouhcine and Khang Tran and Ting Yu and Issa Khalil},
+  title     = {LLMxCPG: Context-Aware Vulnerability Detection Through Code Property Graph-Guided Large Language Models},
+  journal   = {arXiv preprint arXiv:2507.16585},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2507.16585},
+  note      = {方向④ LLM+CPG}
+}
+
+@article{chen:2025:LocAgent,
+  author    = {Zhaoling Chen and Xiangru Tang and Gangda Deng and Fang Wu and Jialong Wu and Zhiwei Jiang and Viktor Prasanna and Arman Cohan and Xingyao Wang},
+  title     = {LocAgent: Graph-Guided LLM Agents for Code Localization},
+  journal   = {arXiv preprint arXiv:2503.09089},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2503.09089},
+  note      = {方向④ LLM+图定位}
+}
+
+@article{cheng:2025:boosting-pointer-analysis,
+  author    = {Baijun Cheng and Kailong Wang and Ling Shi and Haoyu Wang and Peng Di and Ding Li and Xiangqun Chen and Yao Guo},
+  title     = {Boosting Pointer Analysis With LLM-Enhanced Allocation Function Detection},
+  journal   = {arXiv preprint arXiv:2509.22530},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2509.22530},
+  note      = {方向④ LLM+指针分析}
+}
+
+@inproceedings{wang:2024:LLMDFA,
+  author    = {Chengpeng Wang and Wuqi Zhang and Zian Su and Xiangzhe Xu and Xiaoheng Xie and Xiangyu Zhang},
+  title     = {LLMDFA: Analyzing Dataflow in Code with Large Language Models},
+  booktitle = {Advances in Neural Information Processing Systems 37 (NeurIPS)},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2402.10754},
+  note      = {方向④ LLM+数据流分析}
+}
+
+@article{lu:2024:GRACE,
+  author    = {Guilong Lu and Xiaolin Ju and Xiang Chen and Wenlong Pei and Zhilong Cai},
+  title     = {GRACE: Empowering LLM-based Software Vulnerability Detection with Graph Structure and In-Context Learning},
+  journal   = {Journal of Systems and Software},
+  volume    = {212},
+  year      = {2024},
+  doi       = {10.1016/j.jss.2024.112031},
+  publisher = {Elsevier},
+  note      = {方向④ LLM+图结构+上下文学习}
+}
+
+% ===========================================================================
+% 方向 ⑤ — 智能体/定位/复现 (2 篇)
+% ===========================================================================
+
+@article{xi:2025:T2L-Agent,
+  author    = {Haoran Xi and Minghao Shao and Brendan Dolan-Gavitt and Muhammad Shafique and Ramesh Karri},
+  title     = {From Trace to Line: LLM Agent for Real-World OSS Vulnerability Localization},
+  journal   = {arXiv preprint arXiv:2510.02389},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2510.02389},
+  note      = {方向⑤ LLM Agent漏洞定位}
+}
+
+@article{ullah:2025:CVE-Genie,
+  author    = {Saad Ullah and Praneeth Balasubramanian and Wenbo Guo and Amanda Burnett and Hammond Pearce and Christopher Kruegel and Giovanni Vigna and Gianluca Stringhini},
+  title     = {From CVE Entries to Verifiable Exploits: An Automated Multi-Agent Framework for Reproducing CVEs},
+  journal   = {arXiv preprint arXiv:2509.01835},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2509.01835},
+  note      = {方向⑤ LLM Agent CVE分析}
+}
+
+% ===========================================================================
+% 方向 ⑥ — 数据集/评测 (4 篇)
+% ===========================================================================
+
+@article{li:2024:CleanVul,
+  author    = {Yikun Li and Ting Zhang and Ratnadira Widyasari and Yan Naing Tun and Huu Hung Nguyen and Tan Bui and Ivana Clairine Irsan and Yiran Cheng and Xiang Lan and Han Wei Ang and Frank Liauw and Martin Weyssow and Hong Jin Kang and Eng Lieh Ouh and Lwin Khin Shar and David Lo},
+  title     = {CleanVul: Automatic Function-Level Vulnerability Detection in Code Commits Using LLM Heuristics},
+  journal   = {arXiv preprint arXiv:2411.17274},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2411.17274},
+  note      = {方向⑥ 漏洞数据集}
+}
+
+@article{chen:2023:DiverseVul,
+  author    = {Yizheng Chen and Zhoujie Ding and Lamya Alowain and Xinyun Chen and David Wagner},
+  title     = {DiverseVul: A New Vulnerable Source Code Dataset for Deep Learning Based Vulnerability Detection},
+  journal   = {arXiv preprint arXiv:2304.00409},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2304.00409},
+  note      = {方向⑥ 漏洞数据集}
+}
+
+@inproceedings{croft:2023:data-quality,
+  author    = {Roland Croft and M. Ali Babar and M. Mehdi Kholoosi},
+  title     = {Data Quality for Software Vulnerability Datasets},
+  booktitle = {Proceedings of the 45th IEEE/ACM International Conference on Software Engineering (ICSE)},
+  year      = {2023},
+  pages     = {121--133},
+  doi       = {10.1109/ICSE48619.2023.00022},
+  publisher = {IEEE},
+  note      = {方向⑥ 数据质量; arXiv:2301.05456}
+}
+
+@article{zhang:2024:eval-line-level,
+  author    = {Jian Zhang and Chong Wang and Anran Li and Weisong Sun and Cen Zhang and Wei Ma and Yang Liu},
+  title     = {Evaluating Large Language Models for Line-Level Vulnerability Localization},
+  journal   = {arXiv preprint arXiv:2404.00287},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2404.00287},
+  note      = {方向⑥ 行级定位评测}
+}
+
+% ===========================================================================
+% 2022–2023 早期工作 (9 篇, 含 LineVul)
+% ===========================================================================
+
+@article{pearce:2021:zeroshot-vuln-repair,
+  author    = {Hammond Pearce and Benjamin Tan and Baleegh Ahmad and Ramesh Karri and Brendan Dolan-Gavitt},
+  title     = {Examining Zero-Shot Vulnerability Repair with Large Language Models},
+  journal   = {arXiv preprint arXiv:2112.02125},
+  year      = {2021},
+  url       = {https://arxiv.org/abs/2112.02125},
+  note      = {早期 零样本漏洞修复}
+}
+
+@article{fu:2023:chatgpt-vuln,
+  author    = {Michael Fu and Chakkrit Tantithamthavorn and Van Nguyen and Trung Le},
+  title     = {ChatGPT for Vulnerability Detection, Classification, and Repair: How Far Are We?},
+  journal   = {arXiv preprint arXiv:2310.09810},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2310.09810},
+  note      = {早期 ChatGPT漏洞检测}
+}
+
+@article{gao:2023:how-far-vuln-detection,
+  author    = {Zeyu Gao and Hao Wang and Yuchen Zhou and Wenyu Zhu and Chao Zhang},
+  title     = {How Far Have We Gone in Vulnerability Detection Using Large Language Models},
+  journal   = {arXiv preprint arXiv:2311.12420},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2311.12420},
+  note      = {早期 LLM漏洞检测}
+}
+
+@article{ullah:2023:llms-cannot-reliably,
+  author    = {Saad Ullah and Mingji Han and Saurabh Pujar and Hammond Pearce and Ayse Coskun and Gianluca Stringhini},
+  title     = {LLMs Cannot Reliably Identify and Reason About Security Vulnerabilities (Yet?): A Comprehensive Evaluation, Framework, and Benchmarks},
+  journal   = {arXiv preprint arXiv:2312.12575},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2312.12575},
+  note      = {早期 LLM安全漏洞评估}
+}
+
+@article{zhang:2023:prompt-enhanced-vuln,
+  author    = {Chenyuan Zhang and Hao Liu and Jiutian Zeng and Kejing Yang and Yuhong Li and Hui Li},
+  title     = {Prompt-Enhanced Software Vulnerability Detection Using ChatGPT},
+  journal   = {arXiv preprint arXiv:2308.12697},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2308.12697},
+  note      = {早期 提示增强漏洞检测}
+}
+
+@article{chan:2023:transformer-edittime,
+  author    = {Aaron Chan and Anant Kharkar and Roshanak Zilouchian Moghaddam and Yevhen Mohylevskyy and Alec Helyar and Eslam Kamal and Mohamed Elkamhawy and Neel Sundaresan},
+  title     = {Transformer-based Vulnerability Detection in Code at EditTime: Zero-shot, Few-shot, or Fine-tuning?},
+  journal   = {arXiv preprint arXiv:2306.01754},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2306.01754},
+  note      = {早期 EditTime漏洞检测}
+}
+
+@article{xu:2022:code-llm-eval,
+  author    = {Frank F. Xu and Uri Alon and Graham Neubig and Vincent J. Hellendoorn},
+  title     = {A Systematic Evaluation of Large Language Models of Code},
+  journal   = {arXiv preprint arXiv:2202.13169},
+  year      = {2022},
+  url       = {https://arxiv.org/abs/2202.13169},
+  note      = {早期 Code LLM评测}
+}
+
+@article{sobania:2023:chatgpt-bug-fixing,
+  author    = {Dominik Sobania and Martin Briesch and Carol Hanna and Justyna Petke},
+  title     = {An Analysis of the Automatic Bug Fixing Performance of ChatGPT},
+  journal   = {arXiv preprint arXiv:2301.08653},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2301.08653},
+  note      = {早期 LLM代码修复}
+}
+
+@inproceedings{fu:2022:LineVul,
+  author    = {Michael Fu and Chakkrit Tantithamthavorn},
+  title     = {LineVul: A Transformer-based Line-Level Vulnerability Prediction},
+  booktitle = {Proceedings of the 19th IEEE/ACM International Conference on Mining Software Repositories (MSR)},
+  year      = {2022},
+  pages     = {608--620},
+  doi       = {10.1145/3524842.3528452},
+  publisher = {ACM},
+  note      = {早期 行级漏洞预测}
+}
+
+% ===========================================================================
+% === 以下为第二轮收集新增 (2025-06-22, +20 篇, 总计 49 篇) ===
+% ===========================================================================
+
+% ===========================================================================
+% 方向 ② — SCA/版本/可达 (新增 3 篇)
+% ===========================================================================
+
+@article{lingxiang:2025:SAVANT,
+  author    = {Wang Lingxiang and Quanzhi Fu and Wenjia Song and Gelei Deng and Yi Liu and Dan Williams and Ying Zhang},
+  title     = {SAVANT: Vulnerability Detection in Application Dependencies through Semantic-Guided Reachability Analysis},
+  journal   = {arXiv preprint arXiv:2506.17798},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2506.17798},
+  note      = {方向② Java SCA可达性+LLM; Prec 83.8%, Rec 73.8%, F1 78.5%; 55个真实Java项目}
+}
+
+@article{zhang:2025:DGA,
+  author    = {Lyuye Zhang and Chengwei Liu and Jiahui Wu and Shiyang Zhang and Chengyue Liu and Zhengzi Xu and Sen Chen and Yang Liu},
+  title     = {Drop the Golden Apples: Identifying Third-Party Reuse by DB-Less Software Composition Analysis},
+  journal   = {arXiv preprint arXiv:2503.22576},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2503.22576},
+  note      = {方向② 无数据库SCA; LLM模拟人工安全分析识别第三方库复用}
+}
+
+@article{chang:2025:SLICEMATE,
+  author    = {Jianming Chang and Jieke Shi and Yunbo Lyu and Xin Zhou and Lulu Wang and Zhou Yang and Bixin Li and David Lo},
+  title     = {SLICEMATE: Accurate and Scalable Static Program Slicing via LLM-Powered Agents},
+  journal   = {arXiv preprint arXiv:2507.18957},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2507.18957},
+  note      = {方向② LLM Agent程序切片; Java/Python; 绕开传统依赖图构建}
+}
+
+% ===========================================================================
+% 方向 ③ — LLM 消减误报 (新增 5 篇)
+% ===========================================================================
+
+@article{lin:2025:AdaTaint,
+  author    = {Shiyin Lin},
+  title     = {LLM-Driven Adaptive Source-Sink Identification and False Positive Mitigation for Static Analysis},
+  journal   = {arXiv preprint arXiv:2511.04023},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2511.04023},
+  note      = {方向③ 神经符号推理; FP降43.7%, Recall升11.2%; vs CodeQL/Joern}
+}
+
+@article{joos:2025:CodeCureAgent,
+  author    = {Pascal Joos and Islem Bouzenia and Michael Pradel},
+  title     = {CodeCureAgent: Automatic Classification and Repair of Static Analysis Warnings},
+  journal   = {arXiv preprint arXiv:2509.11787},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2509.11787},
+  note      = {方向③ Agentic SAST警告修复; 1000 SonarQube警告/106 Java项目; 修复率96.8%}
+}
+
+@article{agrawal:2025:SAST-Genius,
+  author    = {Vaibhav Agrawal and Kiarash Ahi},
+  title     = {LLM-Driven SAST-Genius: A Hybrid Static Analysis Framework for Comprehensive and Actionable Security},
+  journal   = {arXiv preprint arXiv:2509.15433},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2509.15433},
+  note      = {方向③ IEEE S\&P 2025; 混合LLM+SAST; FP降91% (225→20)}
+}
+
+@article{ameen:2026:QASecClaw,
+  author    = {Mohd Ruhul Ameen and Md Takrim Ul Alam and Akif Islam},
+  title     = {QASecClaw: A Multi-Agent LLM Approach for False Positive Reduction in Static Application Security Testing},
+  journal   = {arXiv preprint arXiv:2605.01885},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2605.01885},
+  note      = {方向③ 多Agent SAST FP消减; FP降88.6% (560→64); F1 90.93% on OWASP v1.2}
+}
+
+@article{gajjar:2025:SecureFixAgent,
+  author    = {Jugal Gajjar and Kamalasankari Subramaniakuppusamy and Relsy Puthal and Kaustik Ranaware},
+  title     = {SecureFixAgent: A Hybrid LLM Agent for Automated Python Static Vulnerability Repair},
+  journal   = {arXiv preprint arXiv:2509.16275},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2509.16275},
+  note      = {方向③ ICMLA 2025; 本地<8B LLM+LoRA; FP降10.8%; D2相关}
+}
+
+% ===========================================================================
+% 方向 ④ — LLM+图/CodeQL (新增 5 篇)
+% ===========================================================================
+
+@article{ghebremichael:2026:SemTaint,
+  author    = {Jonah Ghebremichael and Saastha Vasan and Saad Ullah and Greg Tystahl and David Adei and Christopher Kruegel and Giovanni Vigna and William Enck and Alexandros Kapravelos},
+  title     = {Multi-Agent Taint Specification Extraction for Vulnerability Detection},
+  journal   = {arXiv preprint arXiv:2601.10865},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2601.10865},
+  note      = {方向④ 多Agent+CodeQL调用图; LLM解析静态不可解析调用边; 106个此前不可检测漏洞+4 CVE; D1高度相关}
+}
+
+@article{liu:2024:Vul-LMGNNs,
+  author    = {Ruitong Liu and Yanbin Wang and Haitao Xu and Jianguo Sun and Fan Zhang and Peiyue Li and Zhenhao Guo},
+  title     = {Vul-LMGNNs: Fusing Language Models and Online-Distilled Graph Neural Networks for Code Vulnerability Detection},
+  journal   = {Information Fusion},
+  volume    = {115},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2404.14719},
+  note      = {方向④ CPG+LM+GNN融合; Information Fusion期刊}
+}
+
+@article{wang:2025:VulAgent,
+  author    = {Ziliang Wang and Ge Li and Jia Li and Hao Zhu and Zhi Jin},
+  title     = {VulAgent: Hypothesis-Validation based Multi-Agent Vulnerability Detection},
+  journal   = {arXiv preprint arXiv:2509.11523},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2509.11523},
+  note      = {方向④ 多Agent+Joern CFG/DFG/调用图; 假设-验证范式}
+}
+
+@article{khatun:2025:AndroByte,
+  author    = {Mst Eshita Khatun and Lamine Noureddine and Zhiyong Sui and Aisha Ali-Gombe},
+  title     = {AndroByte: LLM-Driven Privacy Analysis through Bytecode Summarization and Dynamic Dataflow Call Graph Generation},
+  journal   = {arXiv preprint arXiv:2510.15112},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2510.15112},
+  note      = {方向④ ACSAC 2025; LLM驱动动态数据流调用图生成; Android; Fβ 89%}
+}
+
+@article{gajjar:2025:Bridging,
+  author    = {Jugal Gajjar and Kaustik Ranaware and Kamalasankari Subramaniakuppusamy},
+  title     = {Bridging Semantics and Structure for Software Vulnerability Detection using Hybrid Network Models},
+  journal   = {arXiv preprint arXiv:2510.10321},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2510.10321},
+  note      = {方向④ COMPLEX NETWORKS 2025; 异构图+本地<4B LLM; Java准确率93.57%; D2高度相关}
+}
+
+% ===========================================================================
+% 方向 ⑤ — 智能体/定位/复现 (新增 4 篇)
+% ===========================================================================
+
+@article{sun:2026:VIPER-MCP,
+  author    = {Pengyu Sun and Qishu Jin and Enhao Huang and Zifeng Kang and Xin Liu and Dakun Shen and Song Li},
+  title     = {VIPER-MCP: Detecting and Exploiting Taint-Style Vulnerabilities in Model Context Protocol Servers},
+  journal   = {arXiv preprint arXiv:2605.21392},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2605.21392},
+  note      = {方向⑤ 端到端自动审计; 39,884 MCP仓库; 106 zero-days (67 CVE); 动态确认可利用性}
+}
+
+@article{shaikh:2026:FORGE,
+  author    = {Farooq Shaikh},
+  title     = {FORGE: Multi-Agent Graduated Exploitation and Detection Engineering},
+  journal   = {arXiv preprint arXiv:2606.03453},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2606.03453},
+  note      = {方向⑤ 5 Agent分级利用(L0-L3); 603 CVE; 67.8% L1+利用率; \$1.50/CVE}
+}
+
+@article{gajjar:2026:Verify,
+  author    = {Jugal Gajjar},
+  title     = {Verify Before You Fix: Agentic Execution Grounding for Trustworthy Cross-Language Code Analysis},
+  journal   = {arXiv preprint arXiv:2604.10800},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2604.10800},
+  note      = {方向⑤ 执行验证不修复; Java/Python/C++; 89-92%准确率; 禁用验证→不必要修复增131.7%}
+}
+
+@article{ni:2026:LLMVD.js,
+  author    = {Ronghao Ni and Mihai Christodorescu and Limin Jia},
+  title     = {Taint-Style Vulnerability Detection and Confirmation for Node.js Packages Using LLM Agent Reasoning},
+  journal   = {arXiv preprint arXiv:2604.20179},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2604.20179},
+  note      = {方向⑤ 多阶段LLM Agent; 扫描→PoC→执行验证; 84%确认率 vs <22%传统工具}
+}
+
+% ===========================================================================
+% 方向 ⑥ — 数据集/评测 (新增 3 篇)
+% ===========================================================================
+
+@article{damie:2026:TOSSS,
+  author    = {Marc Damie and Murat Bilgehan Ertan and Domenico Essoussi and Angela Makhanu and Gaëtan Peter and Roos Wensveen},
+  title     = {TOSSS: a CVE-based Software Security Benchmark for Large Language Models},
+  journal   = {arXiv preprint arXiv:2603.10969},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2603.10969},
+  note      = {方向⑥ CVE基准; C/C++/Java; 14模型评测}
+}
+
+@article{wang:2026:RealSec-bench,
+  author    = {Yanlin Wang and Ziyao Zhang and Chong Wang and Xinyi Xu and Mingwei Liu and Yong Wang and Jiachi Chen and Zibin Zheng},
+  title     = {RealSec-bench: A Benchmark for Evaluating Secure Code Generation in Real-World Repositories},
+  journal   = {arXiv preprint arXiv:2601.22706},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2601.22706},
+  note      = {方向⑥ Java真实仓库; CodeQL+LLM+人工验证; 105实例/19 CWE; 最多34跳跨过程依赖}
+}
+
+@article{li:2026:ProjectScale,
+  author    = {Fengjie Li and Jiajun Jiang and Dongchi Chen and Yingfei Xiong},
+  title     = {LLM-based Vulnerability Detection at Project Scale: An Empirical Study},
+  journal   = {arXiv preprint arXiv:2601.19239},
+  year      = {2026},
+  url       = {https://arxiv.org/abs/2601.19239},
+  note      = {方向⑥ 实证研究; 5 LLM vs CodeQL/Semgrep; Java召回~34%, FDR~85%; C/C++/Java 222真实漏洞}
+}

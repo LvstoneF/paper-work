@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pdftotext /home/xx/项目/.trae/papers/direction-02-sca/cheng2024-VERCATION.pdf -)"
+    ]
+  }
+}
