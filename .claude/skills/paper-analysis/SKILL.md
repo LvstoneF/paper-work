@@ -42,6 +42,32 @@ Extract key information:
 
 Write to: `/home/xx/项目/.trae/documents/paper-analysis/<PaperName>_精读.md`
 
+### Step 5: Update the knowledge base
+
+After writing the analysis, update the four knowledge base files:
+
+1. **README.md** (`/home/xx/项目/.trae/documents/知识库/README.md`):
+   - Change the paper's status from ⬜ to ✅
+   - Add the link to the new analysis file
+   - Update the progress table (increment completed count)
+   - Add entry to 最近更新 section
+
+2. **维度覆盖矩阵.md** (`/home/xx/项目/.trae/documents/知识库/维度覆盖矩阵.md`):
+   - Add link to the new analysis in the 精读 column
+   - Verify the D1-D5 scores match
+
+3. **按方向索引.md** (`/home/xx/项目/.trae/documents/知识库/按方向索引.md`):
+   - Add link to the new analysis in the 精读 column
+   - Update 方向小结 if the paper adds new insight to the direction
+
+4. **论文关系图.md** (`/home/xx/项目/.trae/documents/知识库/论文关系图.md`):
+   - Identify relationships with already-analyzed papers across all 4 types (🔗/⚔️/🔧/➡️)
+   - Add new entries to the confirmed relationships table
+   - If the paper forms a new node in an evolution chain, update the chain diagram
+   - If the paper has a direct technical link to our thesis (➡️ 正文论文), add it
+
+5. Update the memory file at `/root/.claude/projects/-home-xx-----trae/memory/paper-analysis-project.md` with the latest progress.
+
 ## Key principles
 
 1. **Plain language first.** Every technical term gets a card: term / plain explanation / role in this paper / everyday analogy. Check `术语词典.md` first for existing definitions.

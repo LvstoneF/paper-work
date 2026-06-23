@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pdftotext /home/xx/项目/.trae/papers/direction-02-sca/cheng2024-VERCATION.pdf -)"
+      "Bash(pdftotext /home/xx/项目/.trae/papers/direction-02-sca/cheng2024-VERCATION.pdf -)",
+      "Bash(pdftotext \"papers/direction-03-fp-reduction/wagner2025-Complementary-Security.pdf\" -)",
+      "Bash(grep -nE \"^#{1,3} |^§|^## §\" documents/综述写作骨架.md)"
     ]
   }
 }
