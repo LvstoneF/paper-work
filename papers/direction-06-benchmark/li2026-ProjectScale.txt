@@ -1,0 +1,4150 @@
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+1
+
+LLM-based Vulnerability Detection at Project
+Scale: An Empirical Study
+
+arXiv:2601.19239v1 [cs.SE] 27 Jan 2026
+
+Fengjie Li, Jiajun Jiang, Dongchi Chen, Yingfei Xiong
+
+Abstract—As software complexity grows, security vulnerabilities become more frequent and harmful, making automated vulnerability detection essential. While recent LLM-based detectors
+combine semantic reasoning with static analysis for project-scale
+scanning, their real-world effectiveness remains unclear, and the
+underlying root causes of their failures are still under explored.
+In this paper, we present the first comprehensive empirical study
+of specialized LLM-based detectors and compare them with
+traditional static analyzers at the project scale. Specifically, our
+study evaluates five latest and representative LLM-based methods
+and two traditional tools using: 1) an in-house benchmark of
+222 known real-world vulnerabilities (C/C++ and Java) to assess
+detection capability, and 2) 24 active open-source projects, where
+we manually inspected 385 warnings to assess their practical
+usability and underlying root causes of failures.
+Our evaluation yields three key findings: First, while LLMbased detectors exhibit low recall on the in-house benchmark,
+they still uncover more unique vulnerabilities than traditional
+tools. Second, in open-source projects, both LLM-based and
+traditional tools generate substantial warnings but suffer from
+very high false discovery rates, hindering practical use. Our manual analysis further reveals shallow interprocedural reasoning
+and misidentified source/sink pairs as primary failure causes,
+with LLM-based tools exhibiting additional unique failures.
+Finally, LLM-based methods incurs substantial computational
+costs–hundreds of thousands to hundreds of millions of tokens
+and multi-hour to multi-day runtimes. Overall, our findings
+underscore critical limitations in the robustness, reliability, and
+scalability of current LLM-based detectors. We ultimately summarize a set of implications for future research toward more
+effective and practical project-scale vulnerability detection.
+Index Terms—Vulnerability detection, Large language model,
+Empirical study.
+
+I. I NTRODUCTION
+
+W
+
+ITH the growth of software complexity and deployment scale, the impact of security vulnerabilities becomes more severe. As a result, automated vulnerability detection has become a critical component of modern software
+development and maintenance. Broadly speaking, existing
+vulnerability detection approaches can be categorized into
+static and dynamic techniques [1], [2]. Among them, static
+vulnerability detection has been widely adopted by developers because it can be seamlessly integrated into continuous
+integration pipelines, operates as long as the code is parsable
+or compilable, and has good scalability [3].
+Fengjie Li, Jiajun Jiang are with College of Intelligence and Computing,
+Tianjin University, Tianjin, China; Dongchi Chen is with International Joint
+Institute of Tianjin University, Fuzhou, China; Yingfei Xiong is with the Key
+Laboratory of High Confidence Software Technologies (Peking University),
+Ministry of Education, School of Computer Science, Peking University,
+Beijing, China. (E-mail: fengjie@tju.edu.cn; jiangjiajun@tju.edu.cn; chendongchi@tju.edu.cn; xiongyf@pku.edu.cn).
+
+Traditional static vulnerability detection approaches [4]–[9]
+typically encode expert knowledge as manually engineered
+rules, patterns, and data-flow templates that search for known
+classes of security problems, such as unsafe data flows from
+untrusted sources to sensitive sinks [10] or misuse of securitycritical APIs. Although these analyzers are widely used in
+practice, they require substantial manual effort to design and
+maintain their rule sets, which is time-consuming and laborintensive [3], [11], [12]. Moreover, their reliance on predefined
+patterns inherently limits the generalization and coverage for
+previously unseen or evolving vulnerability types [13], [14].
+Recent advances in Large Language Models (LLMs) have
+sparked growing interest in LLM-based vulnerability detection. Trained on large corpora of code and natural language,
+LLMs can interpret code semantics, summarize complex logic,
+and reason about potential security risks beyond simple syntactic patterns. This has led to an emerging line of LLM-based
+vulnerability methods [15]–[19]. Unlike traditional tools, these
+methods feed source code directly to LLMs and rely on the
+models’ reasoning capabilities instead of manually engineered
+program analyses. However, most of these tools focus on
+function-level or even smaller hunk-level code snippets, where
+LLMs are given relatively simple prompts to decide whether
+a vulnerability is present. This limited context and simplistic
+prompting make the detection particularly sensitive to LLMinduced hallucinations and inconsistent reasoning [20].
+More recently, a growing line of work has proposed LLMbased vulnerability detectors that combine the semantic reasoning capabilities of LLMs with traditional static analysis
+workflows to scale vulnerability detection to the project level.
+These approaches either orchestrate existing static analysis
+tools with LLMs or use LLMs to emulate static analysis
+reasoning processes such as dependency and data-flow tracing,
+including agent-centric frameworks such as RepoAudit [21],
+LLMDFA [22], LLM-assisted checker generators such as
+KNighter [23], IRIS [12], LLMxCPG [24], and control-flow
+guided methods such as INFERROI [25]. Although these tools
+demonstrate promising results, their evaluations are conducted
+on disparate datasets using inconsistent and limited settings
+and metrics, hindering a fair and systematic comparison of
+their effectiveness in real-world scenarios.
+Several studies [26]–[34] have examined the static vulnerability detection capabilities of LLMs, but they either focus
+primarily on simple prompt-based adaption of LLMs [26]–
+[28] or report detection metrics only on function- or hunk-level
+datasets [30]–[34], thereby providing limited evidence of their
+effectiveness when working at the project scale. The exploration of these more specialized LLM-based detectors across
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+different vulnerability types on real-world projects remains
+limited, leaving the following several key aspects insufficiently
+explored: 1) Effectiveness and complementarity on realworld projects: These methods were originally evaluated on
+relatively limited benchmarks and adopt different evaluation
+settings. As a result, it remains unclear how robust and
+generalizable these methods perform when applied to largescale real-world projects that contain diverse vulnerability
+types and complex project-specific APIs, and how much crosstool complementarity they can actually provide in practice.
+2) Comprehensive analysis of failure root causes: Prior
+studies on LLM-based vulnerability detection primarily report aggregate metrics (e.g., precision, recall, F1) without
+systematically analyzing the factors that affect their practical
+usefulness. In particular, the root causes of false positives
+are rarely categorized or quantified, leaving practitioners with
+limited guidance on how to improve these tools. 3) Scalability & Overhead: One primary concern for LLM-based
+methods is their cost and efficiency. However, existing work
+rarely measures the full computational overhead of LLM-based
+vulnerability detectors on real-world projects, such as LLM
+token usage and time overhead across different projects [26].
+Consequently, there is a pressing need for a systematic study
+on real-world scenarios that jointly examines the effectiveness,
+failure root causes, and cost characteristics of these specialized
+LLM-based vulnerability detectors.
+To address these gaps, this paper presents a comprehensive
+empirical study of specialized project-scale LLM-based vulnerability detectors across multiple CWE types, programming
+languages, and workflows, aiming to systematically analyze
+their strengths and weaknesses and to provide insights for
+more robust and efficient vulnerability detection techniques.
+Specifically, we evaluate five recent and representative LLMbased vulnerability detectors that are publicly available, span
+diverse design workflows, together with two widely used
+traditional static analyzers. Our evaluation spans two complementary settings: (1) an in-house benchmark of 222 alreadyknown real-world vulnerabilities covering 8 CWE types in
+C/C++ and Java, which we use to assess the vulnerability
+detection capability of these methods systematically, and (2)
+24 actively maintained open-source projects, which we use to
+evaluate their practical usability in real-world scenarios. On
+the latter, we manually examine 385 sampled reports with
+more than 150 human hours to characterize false positives
+and their root causes. For each tool, we systematically study
+its detection effectiveness, analyze the underlying causes of
+false positives, and measure the overhead.
+Our results reveal several key findings. First, existing
+LLM-based methods exhibit limited coverage of realworld vulnerabilities. On the in-house dataset that contains
+222 known vulnerabilities, the evaluated LLM-based methods
+achieve average recalls of 21.09% and 33.82% for C/C++
+and Java, respectively, indicating that they miss a large portion of ground-truth vulnerabilities, often due to misaligned
+source/sink definitions based on manual analysis. Nevertheless, across this in-house dataset, while different methods
+present complementary results, the LLM-based methods still
+uncover more unique vulnerabilities than the traditional meth-
+
+2
+
+ods (including up to 23 unique cases for CWE-722). Second,
+both LLM-based and traditional methods exhibit a high
+false discovery rate. Both LLM-based and traditional methods
+produce a large number of false alarms, with even the bestperforming tool still reaching an average false discovery rate
+of 85.3% Through manual analysis of 385 sampled reports,
+we build a taxonomy of false positive reasons and quantify
+their distribution across tools, showing that shallow dataflow
+reasoning, imprecise source/sink identification, and overlooked
+key program points in complex context are the dominant
+root causes, accounting for 136, 69 and 46 false positives
+in our study, respectively. Finally, project-scale LLM-based
+detection remains computationally expensive. Our cost analysis shows that project-scale LLM-based detection can require
+between hundreds of thousands and hundreds of millions of
+tokens per project (e.g., up to 38,310.33K input tokens and
+38,078.26K output tokens), as well as multi-hour to multi-day
+runtimes (e.g., up to 4,638.00 minutes), making scalability a
+critical bottleneck.
+In summary, this work makes the following contributions:
+• We conduct, to our knowledge, the first empirical study
+that compares 5 specialized LLM-based vulnerability
+detection tools with 2 traditional static analyzers at the
+project scale.
+• We systematically evaluate the detection effectiveness and
+cross-tool complementarity of these tools on 222 known
+vulnerabilities from 8 CWE types and 24 open-source
+projects.
+• We construct a taxonomy of false positive root causes
+for both LLM-based and traditional methods, manually
+label 385 sampled reports, and quantify how different
+design choices (e.g., dataflow construction, source/sink
+inference, and prompt following) contribute to these
+failures.
+• We measure the computational overhead of LLM-based
+methods in terms of token usage and time cost, and
+discuss the implications for practical deployment and
+future research on more effective and scalable analysis
+workflows.
+• To foster reproducibility and future research, we release all experimental artifacts, including evaluation
+scripts, prompts, taxonomy labels, and detailed statistics, on our project homepage: https://github.com/FengJay/LLM4Security.
+II. BACKGROUND AND R ELATED W ORKS
+A. Large Language Models
+Recent advances in Large Language Models (LLMs) have
+significantly expanded their capability in Software Engineering (SE) fields. Modern foundation models (e.g., ChatGPT [35], Claude [36], and Gemini [37]) are trained on large
+corpora of source code and natural language, enabling them
+to generalize across diverse downstream tasks such as code
+summarization [38], program synthesis [39], and vulnerability
+repair [40]. With in-context learning, LLMs can be adapted to
+downstream tasks through few-shot examples [41] or chain-ofthought (COT) prompting [42], without requiring fine-tuning.
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+In addition, emerging multi-agent frameworks further enhance
+LLM utility by decomposing complex tasks into coordinated
+agents, each responsible for localized subtasks, providing a
+scalable mechanism to integrate external tools and structured
+workflows [43]. These advances have recently motivated a
+growing number of LLM-based vulnerability detectors that
+aim to leverage the semantic reasoning capabilities of LLMs
+for static vulnerability detection.
+B. Static Vulnerability Detection
+Static vulnerability detection is a long-standing research
+topic in software security, which aims to detect vulnerabilities
+by analyzing source code or intermediate representations without executing the program [1]. Modern static analyzers detect
+vulnerabilities through pattern matching, dataflow analysis,
+and taint analysis, which traces untrusted inputs (sources)
+along program paths until they reach security-sensitive operations (sinks) [10]. Representative tools include CodeQL [5],
+which treats code as a relational database and detects vulnerabilities using a declarative domain-specific language (DSL).
+Semgrep [6], performs fast pattern-based detection through
+syntactic and structural matching. SpotBugs [4], which performs bytecode-level pattern and dataflow checks for Java.
+Other widely used tools include joern [9], SonarQube [8],
+CodeSonar [44], CodeGuru [7], Infer [45]. Despite their good
+scalability, these tools rely heavily on manually designed
+rules, predefined source and sink specifications, and languagespecific vulnerability templates, which limit their ability to
+detect previously unseen or evolving vulnerability patterns.
+Recently, numerous learning-based and LLM-based vulnerability detectors [15]–[19], [46]–[50] have been proposed
+to overcome these limitations. Although these approaches
+demonstrate promising performance on benchmark datasets,
+they are often evaluated at function- or hunk-level granularity, and may not reflect their effectiveness in real-world
+scenarios [51], [52]. More recently, LLM-based vulnerability
+detection frameworks have been integrated into static analysis
+workflows to scale vulnerability detection to the project level.
+Examples include RepoAudit [21] and LLMDFA [22], which
+use multi-agent workflows or iterative prompting to analyze
+entire repositories. KNighter [23], IRIS [12] and LLMxCPG [24], which utilize LLMs to automatically synthesize
+static checkers. And INFERROI [25], which integrates controlflow slicing with LLM-guided root cause inference. These
+tools indicate a transition toward project-scale vulnerability
+analysis. However, systematic evaluation of their effectiveness,
+failure modes, and scalability remains limited.
+C. Existing Studies on LLM-based Vulnerability Detection
+Several studies have already explored the use of LLMs
+for vulnerability detection. Wen et al. [26], Purba et.al [27],
+and Lin et al. [28] evaluate various LLMs at both functionand project-level using real-world CVEs. However, rather than
+analyzing full software systems, their evaluation is restricted
+to dependency-related functions extracted around the specific
+modification locations of each CVE. The resulting contexts
+are often incomplete: they cover only a subset of files deemed
+
+3
+
+related to the vulnerability and focus narrowly on code
+fragments surrounding the known issue. Consequently, such
+settings cannot faithfully reflect the false-positive behavior and
+practical effectiveness of LLM-based methods when applied to
+real-world projects. Similarly, Yildiz1 et. al. [29] benchmarked
+multiple LLM-based workflows for vulnerability detection at
+the commit level. Besides, although some studies [30]–[34]
+also explored LLM-based vulnerability detection from various
+perspectives, they primarily operate at function- or hunk-level
+and lack systematic evaluation in real-world project settings,
+leaving it unclear how well such methods generalize to large
+software systems with complex call graphs and project-specific
+APIs.
+III. S TUDY D ESIGN
+A. Research Questions
+To comprehensively evaluate the effectiveness of existing
+LLM-based vulnerability detectors and to further understand
+the key factors that affect their effectiveness, we primarily
+design and investigate the following four research questions
+in this study:
+RQ1: How effective are LLM-based methods in detecting known vulnerabilities in the in-house benchmark? In
+this RQ, we curate an in-house vulnerability dataset by collecting and filtering existing peer-reviewed benchmarks [12],
+[53], [54] and then evaluate the selected methods on it. Our
+analysis aims to provide a clear and direct assessment of the
+detection capabilities of these methods, identifying the key
+factors that influence their effectiveness.
+RQ2: How reliable are LLM-based vulnerability detectors when applied to real-world projects in terms of
+false discovery rates? To further investigate the practical
+effectiveness of LLM-based vulnerability detectors, we apply
+them to a set of recent real-world projects. In this RQ,
+rather than comparing the vulnerability detection capability
+(recall), we focus on the number of warnings these methods
+report and the number of false positives. This provides an
+empirical understanding of how these tools perform in realistic
+development environments.
+RQ3: What are the root causes of false positives? In
+this RQ, we manually analyze the causes behind incorrect
+vulnerability reports produced by these tools in real-world
+projects. This analysis aims to better understand the limitations
+of current LLM-based detectors in real-world scenarios and
+to offer implications for future research and practical tool
+development.
+RQ4: What is the overhead of applying LLM-based
+vulnerability detectors at the project scale? Compared with
+traditional tools, a key concern for LLM-based methods lies
+in their cost and efficiency. In this RQ, we investigate the
+runtime and token usage of LLM-based vulnerability detectors
+to evaluate their scalability and practicality for real-world
+project-level analysis.
+B. Evaluated Methods
+As shown in Table I, we selected five latest and representative LLM-based methods and two traditional static
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+4
+
+TABLE I: Studied vulnerability detection methods in this paper
+Category
+
+Method
+
+LLM Backbone
+
+Languages
+
+Evaluated CWE Type
+
+Workflow
+
+Src&Sink Source
+
+LLM-based
+
+RepoAudit [21]
+Knighter [23]
+IRIS [12]
+LLMDFA [22]
+INFERROI [25]
+
+Claude 3.5 Sonnet
+O3-mini
+GPT-4
+GPT-4
+GPT-4
+
+C/C++
+C/C++
+Java
+Java
+Java
+
+CWE-401, CWE-416, CWE-476
+CWE-401, CWE-416, CWE-476
+CWE-022, CWE-078, CWE-079, CWE-094
+CWE-078, CWE-079
+CWE-772
+
+Multi-Agent
+LLM+CSA [55]
+LLM+CodeQL
+Multi-Agent
+LLM+CFG
+
+Manual
+LLM-inferred
+LLM-inferred
+LLM-inferred
+LLM-inferred
+
+Traditional
+
+CodeQL [5]
+Semgrep [6]
+
+-
+
+C/C++, Java
+C/C++, Java
+
+All above
+All above
+
+Query-driven
+Pattern-driven
+
+Built-in
+Built-in
+
+analysis methods that (i) are publicly available, (ii) cover a
+diverse range of workflows, and (iii) can be readily applied
+across different projects and programming languages. This
+selection enables us to assess the effectiveness of LLMbased approaches as well as their advantages, limitations, and
+potential complementarity with existing traditional tools in
+real-world scenarios. These methods are selected to represent
+a diverse range of detection workflows, LLM backbones,
+supported programming languages, and targeted CWE types1 .
+In the following, we briefly introduce each of them.
+1) LLM-based Methods:
+• RepoAudit [21] A multi-agent framework initiates scanning
+from predefined source points and systematically explores
+program paths by identifying critical callee or caller functions with the assistance of LLMs. When a path reaches a
+predefined sink point, it reports a potential vulnerability. The
+reported paths are then subsequently validated by LLMs to
+reduce false positives and improve the overall performance.
+• KNighter [23] An LLM-based checker generation framework that automatically generates Clang Static Analyzer (CSA) [55] checkers from a vulnerability fixing commit. The generation process includes few-shot prompting,
+iterative regeneration with syntax validation and repair, and
+refinement steps to ensure high detection precision. Since
+KNighter relies on the CSA, it can detect multiple types of
+vulnerabilities in C/C++.
+• IRIS [12] IRIS utilizes LLMs to automatically identify and
+label all methods and their corresponding parameters within
+a project as potential sources or sinks. This information is
+then embedded into predefined CodeQL query templates
+to detect possible vulnerabilities. The paths flagged as
+potentially vulnerable by these queries are then re-evaluated
+by LLMs to reduce false positives.
+• LLMDFA [22] An agent-centric method initiates scanning
+from source program points defined by the LLM. Unlike
+RepoAudit, which will explore program paths on demand,
+LLMDFA will explore all possible paths. When a path
+reaches a sink point defined by the LLM, it reports a
+potential vulnerability path. These paths are further validated
+for reachability by using LLMs or the Z3 solver [56].
+• INFERROI [25] This method is specifically designed to detect resource leak vulnerability (CWE-772). It first employs
+LLMs to infer the intent of program statements (resource
+acquisition, release, or check). Then it explores program
+paths based on the control flow graph (CFG). If a path exists
+1 CWE categories and definitions referenced in this paper are based on the
+official MITRE classification at https://cwe.mitre.org/.
+
+TABLE II: Overview of the in-house dataset used in this paper
+Language
+
+CWE Type
+
+Amount
+
+Source
+
+C/C++
+
+CWE-401
+CWE-416
+CWE-476
+
+40
+10
+14
+
+ReposVul [53]
+
+JAVA
+
+CWE-022
+CWE-078
+CWE-079
+CWE-094
+CWE-772
+
+51
+13
+29
+15
+50
+
+CWE-Bench-Java [12]
+JLeaks [54]
+
+where a resource is acquired but never released, it is reported
+as a potential vulnerability.
+2) Traditional Static Methods:
+• CodeQL [5] A semantic, query-based static analysis framework widely used in industry for vulnerability detection. It
+models source code as a relational dataset and uses logicstyle queries to identify relevant patterns across controlflow and data-flow paths. It supports multiple programming
+languages, including C/C++ and Java, and provides a rich
+collection of built-in security queries covering a broad range
+of CWEs. In this study, we apply CodeQL to C/C++ and
+Java vulnerability types supported by the evaluated LLMbased vulnerability detectors, enabling a consistent and
+comparable assessment across all methods.
+• Semgrep [6] A lightweight, pattern-based static analysis
+tool that identifies vulnerabilities using rule-based matching
+over Abstract Syntax Trees (ASTs). It also supports many
+programming languages, including C/C++ and Java, and offers an extensive rule ecosystem maintained by the community and security researchers. Similarly, we apply Semgrep
+to C/C++ and Java vulnerabilities that are supported by both
+the LLM-based tools and the available Semgrep rule set.
+C. Datasets
+As illustrated in our research questions, we evaluate the
+selected methods in two scenarios: an in-house dataset containing projects that are verified to contain known vulnerabilities,
+and a real-world dataset composed of the latest open-source
+projects. Since different methods support diverse CWE types,
+we choose a subset of CWE-categories (as shown in Table I)
+covered most of them, to enable a fair comparison and meaningful analysis across methods. This choice is also practical in
+real-world settings, where extending these LLM-based tools
+(many of which target only a limited set of CWEs) to new
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+5
+
+TABLE III: Evaluated real-world projects used in this study
+CWE
+
+Repository Name
+
+Commit
+
+Size (LOC)
+
+Stars
+
+CWE-401
+
+linux/sound
+linux/mm
+ImageMagic
+
+6093a68
+6093a68
+3bf1076
+
+1,253,234
+133,952
+680,878
+
+207K
+207K
+14.9K
+
+CWE-416
+
+linux/net
+linux/drivers/net
+vim
+
+6093a68
+6093a68
+8feaa94
+
+962,143
+3,924,621
+1,192,925
+
+207K
+207K
+39.3K
+
+CWE-476
+
+linux/drivers/peci
+gpac
+bitlbee
+
+6093a68
+c6a72c3
+8af06ca
+
+1,715
+859,528
+33,650
+
+207K
+3.1K
+632
+
+CWE-022
+
+OpenOLAT
+spark
+Dspace
+
+df53b85
+1973e40
+3b24801
+
+1,907,083
+11,941
+448,030
+
+394
+9.7K
+1K
+
+CWE-078
+
+xstream
+workflow-cps-plugin
+tika
+
+a22d3af
+e4b9517
+2b38ed1
+
+76,339
+238,588
+228,309
+
+752
+179
+3.4K
+
+CWE-079
+
+xwiki-platform
+jenkins
+keycloak
+
+fc73498
+69d5a54
+4f55b9b6
+
+5,553,098
+300,491
+6,033,855
+
+1.2K
+24.7K
+31K
+
+CWE-094
+
+onedev
+activemq
+cron-utils
+
+b8a4d7cd
+56ea235e
+bac6e866
+
+552,486
+611,964
+16,244
+
+14.5K
+2.4K
+1.2K
+
+CWE-722
+
+sql2o
+RxJava
+jsoup
+
+744b85b3
+f07765ed
+acafbcf3
+
+8,027
+325,394
+38,128
+
+1.2K
+48.4K
+11.3K
+
+CWE types often requires substantial engineering effort (e.g.,
+redesigning rules, prompts, or analysis pipelines), rather than
+being a simple configuration change. The details of the studied
+datasets are presented in Table II and Table III.
+• In-house dataset: We construct an in-house dataset by
+consolidating vulnerabilities from three peer-reviewed
+benchmarks, providing a controlled setting to assess the
+detection effectiveness of the evaluated methods: ReposVul [53], CWE-Bench-Java [12], and JLeaks [54].
+ReposVul is an automatically curated dataset built using
+LLMs and static analysis tools, containing 6,134 CVE
+entries covering 236 CWE types across 1,491 opensource projects. For the C/C++ portion of ReposVul, we
+retain only cases from the Linux kernel after 2019 to ensure recency and buildability. CWE-Bench-Java provides
+manually curated Java vulnerabilities from real-world
+projects. From this benchmark, we select vulnerable cases
+from Maven projects to guarantee successful building
+and analysis. JLeaks is a high-quality benchmark focusing on Java resource leak vulnerabilities and has been
+manually validated. From JLeaks, we randomly sample
+50 representative cases. All selected cases from these
+three sources are further manually checked to ensure
+correctness, validity, and successful compilation.
+• Real-world projects: To complement the in-house
+dataset and avoid data leakage, we construct a realworld dataset by selecting actively maintained opensource projects that have historically exhibited vulnerabilities of the studied CWE types. As summarized in
+Table III, these projects span both C/C++ and Java
+and cover diverse domains such as operating systems,
+multimedia processing, networking, data platforms, and
+
+web frameworks. For C/C++ projects, we select the latest
+versions of widely used software (e.g., the Linux kernel,
+ImageMagick, Vim) that historically contain vulnerabilities of the corresponding CWE types [53], ensuring that
+the chosen commits are recent and the projects remain
+actively maintained. Similarly, for Java projects, we select the latest versions of well-maintained projects (e.g.,
+XStream, Jenkins, Keycloak) that historically contain
+vulnerabilities of the studied CWE types [12], and ensure
+that each project can be successfully built and analyzed.
+This dataset provides a realistic and diverse foundation
+for evaluating the scalability and practical effectiveness
+of the evaluated methods.
+
+D. Evaluation Metrics
+To evaluate the effectiveness of the evaluated methods, we
+adopt several standard detection metrics by following existing
+studies [26]–[34], and additionally consider tool costs in terms
+of token usage and time overhead.
+In-house dataset. For the curated in-house dataset, each vulnerable project is labeled with the actual vulnerable program
+point(s). Consequently, we consider a vulnerability successfully detected by a tool as long as it reports the associated
+vulnerable point(s) (a.k.a, true positive: TP), otherwise, the
+vulnerability is missed by the tool (a.k.a, false negative:
+FN). In particular, since the non-vulnerable code space in the
+projects is huge and not fully labeled, we focus on recall rather
+than full precision on this dataset:
+Recall =
+
+TP
+× 100%.
+TP + FN
+
+Real-world projects. For these real-world open-source
+projects, it is unknown whether there are vulnerabilities in
+them. For each tool and project, we therefore report: 1)
+#Reports, the total number of warnings produced, 2) #Files,
+the number of distinct source files that contain at least one
+warning, and 3) #Sampled FPs, the number of FPs (benign
+instances incorrectly reported as vulnerabilities by the tools)
+among the sampled warnings. Since manually validating a
+warning is time-consuming and labor-intensive, it often requires inspecting project-specific APIs, transitive dependencies, and relevant control and data flows across the entire
+project. Therefore, two authors sampled up to 10 warnings
+per tool per project and independently labeled each as a true
+positive or false positive, resolving disagreements through
+discussion. In total, we manually examined 385 sampled
+warnings across all tools and projects, which required more
+than 150 human hours. Based on these labels, we estimate the
+Sampled False Discovery Rate (SFDR) as
+SFDR =
+
+#Sampled FPs
+#Sampled Reports
+
+Token usage and time overhead. For RQ4, we quantify the
+computational overhead of LLM-based methods by measuring
+the input and output token consumption of each tool, as well
+as the end-to-end detection time per project (Section V-D).
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+IV. E XPERIMENTAL S ETUP
+For LLM-based vulnerability detection methods, we directly
+use their released replication packages and follow the backbone models and hyperparameters (e.g. function call-chain
+exploration depth, temperature, and top-p) recommended in
+the original papers. All experiments are conducted via the
+official OpenAI and Anthropic Claude APIs [57]–[59]. For
+tools that require manually specified sources and sinks (e.g.,
+RepoAudit), we explicitly configure all source–sink pairs for
+the in-house dataset, and rely on the tool’s default source–sink
+configuration when analyzing the real-world projects. For tools
+whose sources and sinks are inferred by LLMs, we directly
+adopt the definitions generated by the models.
+For traditional static vulnerability detection methods, we
+manually curate the predefined rule set by selecting only
+those rules that are relevant to the target CWE types evaluated in this study. Specifically, for CodeQL, we finally
+selected 48 predefined rules that are relevant to our target CWE types from the official CodeQL rule set, such
+as CWE-401/MemoryLeakOnFailedCallToRealloc.
+ql and Critical/MemoryMayNotBeFreed.ql for
+CWE-401, for Semgrep, we finally selected 59 predefined
+rules that are relevant to our target CWE types from the
+official rule sets (e.g., the official XSS rules for CWE-079).
+More details about the selected CodeQL and Semgrep rules
+are available in our Appendix B and on our homepage [60].
+Although different rules may produce reports with varying
+severity levels (e.g., some are marked as errors and others as
+recommendations), we treat all reports equally in this study.
+All experiments are conducted on a local server equipped
+with dual Intel Xeon 6388 CPUs, 512 GB of RAM, and four
+NVIDIA A800 GPUs, running Ubuntu 20.04.6 LTS. All LLM
+API requests, as well as CodeQL and Semgrep analyses, are
+executed on this server in our experiments.
+
+6
+
+on our analysis, 62/64, 64/64, and 64/64 missed vulnerabilities
+for CodeQL, Semgrep, and KNighter, respectively, are directly
+attributable to such mismatches.
+Here is an example shown in Figure 2, the target CWE401 vulnerability is triggered because the function directly
+returns in the if-true branch (line 17) without releasing the skb object allocated by the project-specific API
+dev_alloc_skb (line 7). However, all four selected tools
+can not detect it. For example, CodeQL’s built-in rules typically recognize only a narrow set of standard allocation APIs
+(e.g., malloc and calloc), and thus miss project-specific
+allocators such as dev_alloc_skb. Adapting CodeQL to
+detect such cases is non-trivial: developers must either extend
+project-specific libraries to model dev_alloc_skb (and its
+wrappers) as allocation sources and enumerate the corresponding release functions, or implement a dedicated checker that
+explicitly encodes the allocation–deallocation protocol. Both
+options require a deep understanding of the project’s APIs
+and CodeQL’s query language, making them difficult to scale
+across diverse projects and evolving code bases.
+Similarly, CSA checkers generated by KNighter focus exclusively on matching limited deallocation functions (e.g.,
+kfree), while this design enables customization, extending
+these checkers in practice requires familiarity with CSA libraries, macros, and the tool’s analysis workflow, and typically
+involves writing and debugging substantial C code (often more
+than 100 lines). For Semgrep, developers need to understand
+the relevant AST structures and tool-specific code organization, know how to configure and refine the corresponding
+modeling rules, which further raises the barrier to practical
+adoption.
+45
+
+Source-Sink Mismatch
+
+Concurrency Vulnerability
+
+Mis-Inferred Control Flow
+
+Missed Critical Program Points
+
+Deep Call Chains
+40
+
+35
+
+V. R ESULT A NALYSIS
+30
+
+25
+
+20
+
+40
+
+40
+
+40
+1
+4
+
+15
+
+2
+10
+
+10
+
+5
+
+14
+
+12
+
+14
+
+10
+
+1
+
+4
+
+8
+
+3
+
+13
+
+10
+
+3
+
+CODEQL
+
+SEMGREP
+
+KNIGHTER
+
+CWE-476
+
+CWE-416
+
+CWE-401
+
+CWE-476
+
+CWE-416
+
+CWE-401
+
+CWE-476
+
+CWE-416
+
+CWE-401
+
+CWE-476
+
+CWE-416
+
+0
+
+CWE-401
+
+Results on C/C++ vulnerabilities. Table IV demonstrates
+the detection results of evaluated methods on different CWE
+types. Overall, LLM-based methods achieve an average recall
+of 21.09% (27/128). In particular, RepoAudit consistently
+achieves the highest recall across all C/C++ vulnerabilities,
+detecting 55.00% of CWE-401 cases, 10.00% of CWE-416
+cases, and 28.57% of CWE-476 cases. In contrast, KNighter,
+CodeQL, and Semgrep fail to detect any instances in these
+three categories. This consistently low recall across tools suggests limited generalizability beyond their original evaluation
+settings. In particular, for Linux kernel–related vulnerabilities,
+RepoAudit was evaluated on only 3 known intra-function cases
+in its original study, while KNighter did not report recall
+against known ground truth, which motivates us further to
+investigate the underlying causes of their missed detections on
+this broader dataset. Manual analysis (as shown in Figure 1)
+shows that most missed detections stem from incorrect or
+incomplete identification of source and sink APIs. In particular, the definitions of source-sink specifications in checkers
+rarely match the actual APIs used in the real projects. Based
+
+AMOUNT
+
+A. RQ1: Effectiveness in Detecting In-house Vulnerabilities
+
+REPOAUDIT
+
+Fig. 1: Reasons for undetected C/C++ vulnerabilities.
+As mentioned in Section IV, even when we provide RepoAudit with the exact source-sink pairs, it still fails to detect
+all selected vulnerabilities. We attribute 13 missed cases to
+Mis-Inferred Control Flow under complex context (e.g.,
+nested branches and goto statements), and 11 cases (8 +
+3) to Concurrency Vulnerabilities where the LLM fails to
+reason about thread interleavings. The remaining missed cases
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+7
+
+TABLE IV: Effectiveness of evaluated tools on the in-house dataset. In this table, #Detected is shown as X/Y, where X denotes
+the number of true positives and Y the total number of vulnerabilities.
+
+CWE
+
+Method
+
+#Detected
+
+Recall (%)
+
+CWE
+
+CWE-401
+(C/C++)
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+22/40
+0
+0
+0
+
+55.00
+0.00
+0.00
+0.00
+
+CWE-022
+(Java)
+
+CWE-416
+(C/C++)
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+1/10
+0
+0
+0
+
+10.00
+0.00
+0.00
+0.00
+
+CWE-476
+(C/C++)
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+4/14
+0
+0
+0
+
+28.57
+0.00
+0.00
+0.00
+
+INFERROI
+
+31/50
+
+62.00
+
+CodeQL
+
+5/50
+
+10.00
+
+CWE-772
+(Java)
+
+linux/drivers/net/wireless/marvell/mwifiex/pcie.c
+1. static int mwifiex_pcie_alloc_cmdrsp_buf(struct mwifiex_adapter
+*adapter)
+2. {
+3.
+struct pcie_service_card *card = adapter->card;
+4.
+struct sk_buff *skb;
+5.
+6.
+/* Allocate memory for receiving command response data */
+7. 1 skb = dev_alloc_skb(MWIFIEX_UPLD_SIZE);
+Source
+8.
+if (!skb) {
+!
+9.
+mwifiex_dbg(adapter, ERROR,
+10.
+"Unable to allocate skb for command response data.\n");
+11.
+return -ENOMEM;
+12. }
+13. skb_put(skb, MWIFIEX_UPLD_SIZE);
+14. 2 if (mwifiex_map_pci_memory(adapter, skb, MWIFIEX_UPLD_SIZE,
+15.
+PCI_DMA_FROMDEVICE)){
+16.
++kfree_skb(skb); // FIX!!!
+17. 3
+return -1;
+18.
+}
+19.
+20. card->cmdrsp_buf = skb;
+21. return 0;
+22. }
+
+Method
+
+#Detected
+
+Recall (%)
+
+IRIS
+
+19/51
+
+37.25
+
+CodeQL
+Semgrep
+
+16/51
+6/51
+
+31.37
+11.76
+
+CWE-078
+(Java)
+
+IRIS
+LLMDFA
+CodeQL
+Semgrep
+
+6/13
+0
+0
+1/13
+
+46.15
+0.00
+0.00
+7.69
+
+CWE-079
+(Java)
+
+IRIS
+LLMDFA
+CodeQL
+Semgrep
+
+7/31
+0
+1/29
+0
+
+22.58
+0.00
+3.44
+0.00
+
+CWE-094
+(Java)
+
+IRIS
+CodeQL
+Semgrep
+
+6/15
+0
+0
+
+40.00
+0.00
+0.00
+
+Default query suite provided by CodeQL
+from AllocationExpr alloc
+where
+alloc.requiresDealloc() and not allocMayBeFreed(alloc)
+select alloc, "This memory is never freed."
+.../ql/lib/.../Std.allocation.model.yaml
+extensions:
+malloc…
+- addsTo:
+Do Not Match
+pack: codeql/cpp-all
+dev_alloc_skb
+extensible: allocationFunctionModel
+data:
+- ["std", "", False, "malloc", "0", "", "", True]
+- ["", "", False, "alloca", "0", "", "", False]
+- ["", "", False, "_alloca", "0", "", "", False]
+- ["", "", False, "_malloca", "0", "", "", False]...
+c/mismatched-memory-management rule in Semgrep
+- patterns:
+- pattern: free($PTR);
+- pattern-not-inside: |
+$PTR = malloc(...);
+...
+free($PTR);
+...
+…
+
+free
+Does Not Match
+dev_alloc_skb
+
+Part of Checker file generated by KNigher
+bool hasKfreeEfuse(const Stmt *S, CheckerContext &C) {
+if (!S) return false;
+if (auto *CE = dyn_cast<CallExpr>(S)) {
+const Expr *Cal = CE->getCallee();
+kfree
+if (Cal && ExprHasName(Cal, "kfree", C) &&
+CE->getNumArgs() && ExprHasName(CE->getArg(0),
+"efuse",
+Does Not
+MatchC))
+return true;
+dev_alloc_skb
+}
+for (auto *Ch : S->children())
+if (hasKfreeEfuse(Ch, C)) return true;
+return false;
+}
+void SAGenTestChecker::checkBranchCondition(const Stmt *Cond,
+CheckerContext &C) const {
+...
+if (!ExprHasName(cast<Expr>(Cond), "lvts_td->calib", C))
+return;
+...
+if (!hasKfreeEfuse(ThenBranch, C)) {
+if (ExplodedNode *N = C.generateNonFatalErrorNode()) {
+auto R = std::make_unique<PathSensitiveBugReport>(
+*BT, "efuse not freed on devm_krealloc() failure", N);
+...
+
+Fig. 2: Illustrating example of why these tools fail to detect the vulnerability.
+
+are mainly due to (1) Deep Call Chains, where RepoAudit
+by default explores only three layers of context to avoid path
+explosion, causing extracted paths to terminate before reaching
+the sink, and (2) Missed Critical Program Points, where
+LLMs tend to overlook critical statements (e.g., early returns
+or sanitizers) in the paths from source to sink.
+Results on Java vulnerabilities. For Java vulnerabilities,
+effectiveness varies across tools and CWE types. Overall,
+LLM-based methods achieve an average recall of 33.82%
+(69/204). Traditional analyzers (CodeQL and Semgrep) perform markedly worse, typically detecting about 10.00% of
+cases. Specifically, IRIS demonstrates the strongest performance, consistent with that reported in its original paper,
+achieving recalls of 37.25% on CWE-022, 46.15% on CWE078, 22.58% on CWE-079, and 40.00% on CWE-094. In
+contrast, LLMDFA yields no detections on evaluated Java
+vulnerabilities. Manual inspection shows that, similar to the
+C/C++ results, most of LLMDFA’s missed cases (42/44) arise
+because the source and sink APIs inferred by the LLMs
+do not match the actual project-specific APIs. The fundamental reason is that LLMs struggle to generate accurate project-specific source-sink definitions from limited
+
+prompt context. In LLMDFA, few-shot prompting is used
+to guide the LLM to predict potential source-sink APIs, so
+the model tends to produce definitions that are similar to the
+examples rather than fully tailored to the project. In contrast,
+IRIS systematically enumerates and analyzes all imported
+and locally defined APIs within the project, leading to more
+accurate and comprehensive source-sink coverage. Besides, for
+resource-leak vulnerabilities (CWE-772), INFERROI achieves
+the highest recall at 62.00%, in line with its original paper and
+outperforming CodeQL (10.00%).
+Complementary Analysis. To further investigate how different
+tools complement or overlap with each other, we analyze
+the overlap of detected vulnerabilities across tools. For CWE
+types that are detected by only one tool, this complementary analysis is omitted. As shown in Figure 3, LLM-based
+methods contribute a substantially larger portion of unique
+detections, highlighting their ability to surface project-specific
+or unconventional patterns that traditional tools do not cover.
+In contrast, traditional tools (CodeQL and Semgrep) yield
+very limited unique detections (at most 3 unique detections on
+CWE-022), and their findings largely fall within the detection
+sets of LLM-based methods. These results suggest that, in
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+8
+
+TABLE V: Detection results of the evaluated tools on real-world C/C++ projects. In this table, #R(#F) denotes the number
+of reports and the corresponding number of files. #FPs is shown as X/Y, where X is the number of false positives among Y
+sampled reports.
+RepoAudit
+
+Knighter
+
+CodeQL
+
+Semgrep
+
+CWE
+
+Project
+
+#R(#F)
+
+#FPs
+
+SFDR
+
+#R(#F)
+
+#FPs
+
+SFDR
+
+#R(#F)
+
+#FPs
+
+SFDR
+
+#R(#F)
+
+#FPs
+
+SFDR
+
+CWE-401
+
+linux/sound
+linux/mm
+ImageMagic
+
+333(25)
+356(19)
+348(9)
+
+10/10
+10/10
+10/10
+
+100.0%
+100.0%
+100.0%
+
+6(6)
+0
+3(3)
+
+6/6
+0
+3/3
+
+100.0%
+0
+100.0%
+
+0
+0
+141(17)
+
+0
+0
+9/10
+
+0
+0
+90.0%
+
+0
+0
+37(9)
+
+0
+0
+10/10
+
+0
+0
+100.0%
+
+Average of CWE-401
+
+346 (18)
+
+10/10
+
+100.0%
+
+3 (3)
+
+3/3
+
+100.0%
+
+47 (6)
+
+3/3.3
+
+90.0%
+
+13 (3)
+
+3.3/3.3
+
+100.0%
+
+3(2)
+1(1)
+32(5)
+
+3/3
+1/1
+10/10
+
+100.0%
+100.0%
+100.0%
+
+12(7)
+79(33)
+0
+
+10/10
+10/10
+0
+
+100.0%
+100.0%
+0
+
+0
+1(1)
+0
+
+0
+1/1
+0
+
+0
+100.0%
+0
+
+0
+0
+2(1)
+
+0
+0
+2/2
+
+0
+0
+100.0%
+
+12(3)
+
+4.7/4.7
+
+100.0%
+
+27(14)
+
+6.7/6.7
+
+100.0%
+
+1(1)
+
+0.3/9.3
+
+100.0%
+
+1(1)
+
+0.7/0.7
+
+100.0%
+
+3(1)
+77(10)
+374(38)
+
+3/3
+10/10
+8/10
+
+100.0%
+100.0%
+80.0%
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+3(3)
+6345(337)
+284(53)
+
+3/3
+6/10
+10/10
+
+100.0%
+60.0%
+100.0%
+
+0
+1(1)
+0
+
+0
+0/1
+0
+
+0
+0.0%
+0
+
+CWE-416
+
+linux/net
+linux/drivers/net
+vim
+
+Average of CWE-416
+CWE-476
+
+linux/drivers/peci
+gpac
+bitlbee
+
+Average of CWE-476
+
+152(17)
+
+7/7.7
+
+91.3%
+
+0
+
+0
+
+0
+
+2211(131)
+
+6.3/7.7
+
+82.6%
+
+1(1)
+
+0/0.3
+
+0.0%
+
+Average
+
+170(13)
+
+7.2/7.4
+
+97.0%
+
+10(6)
+
+3.2/3.2
+
+100.0%
+
+753(46)
+
+3.2/3.8
+
+85.3%
+
+5(2)
+
+1.3/1.4
+
+92.30%
+
+IRIS
+
+CodeQL
+6
+
+9
+1
+
+3
+
+3
+
+1
+
+CWE-022
+
+1
+
+IRIS
+
+CWE-079
+
+0
+
+IRIS
+
+Semgrep
+
+6
+
+1
+
+5
+
+1
+
+Semgrep
+
+CWE-078
+
+3
+
+0
+
+23
+
+CodeQL
+
+INFERROI
+
+1
+
+CodeQL
+
+CWE-722
+
+Fig. 3: Unique vulnerabilities detected by each tool
+our evaluated setting, these LLM-based methods often cover a
+substantial portion of the vulnerabilities reported by traditional
+static tools and can additionally uncover vulnerabilities beyond
+their coverage.
+Finding 1: The evaluated LLM-based methods exhibit
+low average recall (21.09% for C/C++ and 32.70% for
+Java). Nevertheless, they still uncover more vulnerabilities, including more unique vulnerabilities, than traditional tools across the selected vulnerabilities.
+B. RQ2: Effectiveness in Real-world Deployment Scenarios
+Table V and VI summarize the effectiveness of the evaluated
+methods on large and latest real-world projects. Overall,
+the results reveal that LLM-based detectors still struggle
+when applied in real-world scenarios, with high false
+discovery rates that limit their practical effectiveness. For
+C/C++ projects, RepoAudit generates a number of warnings on
+several repositories, with some projects (e.g., linux/sound
+and ImageMagick) each having more than 300 reports.
+
+Two authors independently examined the sampled warnings
+by carefully analyzing project-specific APIs, dependencies,
+and relevant control and data flows, and then resolved any
+disagreements through discussion. However, this manual verification of sampled reports reveals that the vast majority
+are false positives, with an average SFDR of 97.0%. For
+example, only 2 out of 10 sampled reports from bitlbee
+are identified as true positives. In contrast, KNighter, CodeQL,
+Semgrep continue to face the source-sink mismatch issue
+mentioned in Section V-A, which leads to their inability to
+detect potential vulnerabilities in the majority of the evaluated projects. Specifically, KNighter produces 79 reports in
+linux/drivers/net, achieving a high SFDR (100.0%).
+However, beyond this project, it identifies far fewer potential
+vulnerabilities in the remaining evaluated projects. Meanwhile,
+CodeQL produces a very large number of reports on the
+gpac repository (over 6,000 alerts), but manual validation
+of the sampled cases shows that the vast majority of them
+are false positives. Most of these reports (4,827 of them)
+stem from the coding manners of this project, in which the
+relevant APIs guarantee non-NULL return values under their
+usage conventions, so the callers omit explicit null checks.
+Nevertheless, these safe call sites match the ‘‘Returned
+pointer not checked’’ pattern, and are flagged as
+warnings. In contrast, the LLM-based RepoAudit can interpret
+the surrounding semantics and avoid reporting such cases as
+vulnerabilities. Semgrep produces a smaller number of reports
+across the evaluated projects, while also exhibiting a high false
+discovery rate, as determined by our inspection.
+For Java projects, a similar pattern emerges. IRIS consistently produces the largest number of warnings among all
+evaluated tools, yet manual inspection again reveals almost no
+true positives, with an average SFDR of 94.4%. In contrast,
+LLMDFA generates only a small number of reports, and
+among them, only a single case is identified as a true positive.
+INFERROI also detects only a limited number of true positives
+(e.g., one in sql2o and one in RxJava), although it can
+produce up to 360 reports across the three evaluated projects.
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+9
+
+TABLE VI: Detection results of evaluated tools on real-world Java projects. In this table, #R(#F) denotes the number of reports
+and the corresponding number of files. #FPs is shown as X/Y, where X is the number of false positives among Y sampled
+reports. – indicates that the tool does not support the corresponding CWE type.
+IRIS
+
+LLMDFA
+
+CodeQL
+
+Semgrep
+
+INFERROI
+
+CWE
+
+Project
+
+#R(#F)
+
+#FPs
+
+SFDR
+
+#R(#F)
+
+#FPs
+
+SFDR
+
+#R(#F)
+
+#FPs
+
+SFDR
+
+#R(#F)
+
+#FPs
+
+SFDR
+
+#R(#F)
+
+#FPs
+
+SFDR
+
+CWE-022
+
+OpenOLAT
+spark
+Dspace
+
+709(209)
+7(4)
+552(160)
+
+9/10
+7/7
+9/10
+
+90.0%
+100.0%
+90.0%
+
+-
+
+-
+
+-
+
+63(24)
+5(3)
+2(2)
+
+10/10
+5/5
+2/2
+
+100.0%
+100.0%
+100.0%
+
+183(87)
+5(4)
+107(46)
+
+10/10
+5/5
+10/10
+
+100.0%
+100.0%
+100.0%
+
+-
+
+-
+
+-
+
+Average of CWE-022
+
+423(125)
+
+8.3/9
+
+92.6%
+
+-
+
+-
+
+-
+
+24(7)
+
+5.7/5.7
+
+100.0%
+
+99(46)
+
+8.3/8.3
+
+100.0%
+
+-
+
+-
+
+-
+
+17(11)
+5(5)
+71(42)
+
+10/10
+5/5
+10/10
+
+100.0%
+100.0%
+100.0%
+
+0
+0
+4(3)
+
+0
+0
+4/4
+
+0
+0
+100.0%
+
+0
+0
+13(5)
+
+0
+0
+10/10
+
+0
+0
+100.0%
+
+0
+0
+32(17)
+
+0
+0
+10/10
+
+0
+0
+100.0%
+
+-
+
+-
+
+-
+
+CWE-078
+
+xstream
+workflow-cps-plugin
+tika
+
+Average of CWE-078
+
+31(20)
+
+8.3/8.3
+
+100.0%
+
+2(1)
+
+1.3/1.3
+
+100.0%
+
+5(2)
+
+3.3/3.3
+
+100.0%
+
+11(6)
+
+3.3/3.3
+
+100.0%
+
+-
+
+-
+
+-
+
+458(197)
+208(100)
+358(177)
+
+10/10
+8/10
+9/10
+
+100.0%
+80.0%
+90.0%
+
+5(2)
+4(3)
+2(1)
+
+5/5
+3/4
+2/2
+
+100.0%
+75.0%
+100.0%
+
+1(1)
+0
+6(3)
+
+1/1
+0
+4/6
+
+100.0%
+0
+66.7%
+
+1(1)
+1(1)
+0
+
+1/1
+1/1
+0
+
+100.0%
+100.0%
+0
+
+-
+
+-
+
+-
+
+Average of CWE-079
+
+342(158)
+
+9.0/10.0
+
+90.0%
+
+4(2)
+
+3.3/3.7
+
+90.9%
+
+3(2)
+
+1.7/2.3
+
+71.4%
+
+1(1)
+
+0.7/0.7
+
+100.0%
+
+-
+
+-
+
+-
+
+onedev
+activemq
+cron-utils
+
+128(27)
+271(91)
+5(4)
+
+10/10
+9/10
+5/5
+
+100.0%
+90.0%
+100.0%
+
+-
+
+-
+
+-
+
+24(18)
+0
+0
+
+10/10
+0
+0
+
+100.0%
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+0
+0
+0
+
+-
+
+-
+
+-
+
+Average of CWE-094
+
+135(41)
+
+8.0/8.3
+
+96.0%
+
+-
+
+-
+
+-
+
+8(6)
+
+3.3/3.3
+
+100.0%
+
+0
+
+0
+
+0
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+0
+0
+9(5)
+
+0
+0
+6/9
+
+0
+0
+66.7%
+
+-
+
+-
+
+-
+
+23(10)
+360(228)
+66(19)
+
+9/10
+9/10
+10/10
+
+90.0%
+90.0%
+100.0%
+
+CWE-079
+
+CWE-094
+
+CWE-722
+
+xwiki-platform
+jenkins
+keycloak
+
+sql2o
+RxJava
+jsoup
+
+Average of CWE-772
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+3(2)
+
+2.0/3.0
+
+66.7%
+
+-
+
+-
+
+-
+
+150(86)
+
+9.3/10
+
+93.3%
+
+Average
+
+233(86)
+
+8.4/8.9
+
+94.4%
+
+3(2)
+
+2.3/2.5
+
+93.3%
+
+9(5)
+
+3.2/3.5
+
+94.3%
+
+28(13)
+
+3.1/3.1
+
+100.0%
+
+150(86)
+
+9.7/10
+
+96.7%
+
+Due to the rigid, predefined rule sets of CodeQL and Semgrep,
+they are able to generate warnings in only about half of the
+selected projects (8 out of 15 projects for CodeQL, 6 out of 12
+projects for Semgrep). Moreover, based on manual inspection
+of sampled reports, only CodeQL produces 5 true positives.
+Collectively, these results indicate that both current LLMbased and traditional static vulnerability detectors struggle
+to be directly used in real-world scenarios, typically failing
+either due to near-zero recall, as explained in Section V-A, or
+overwhelming numbers of false positives in our setting. These
+observations motivate our deeper investigation in RQ3, where
+we examine the underlying causes of these false positives and
+analyze why existing techniques break down.
+Finding 2: On real-world projects, both LLM-based and
+traditional tools generate many warnings yet still exhibit
+very high SFDR (even the best-performing tool averages
+85.3%), severely limiting their practical usefulness.
+
+C. RQ3: Causes of False Positives
+As described in Section III-D, two authors with a background in security and software engineering manually analyzed the sampled false positives. We applied an inductive
+open-coding procedure with double coding [61]. Each author
+first reviewed all examples to derive a coherent taxonomy of
+FP causes and iteratively refined the codebook. After consolidating and resolving disagreements on category definitions, the
+experts independently assigned the primary FP reason for each
+case. Finally, they reconciled disagreements and consolidated
+the labels into a unified annotation set.
+In the following, we analyze several representative reasons
+from this taxonomy. The taxonomy and the definition of each
+reason are summarized in Figure 4 and Figure 5. Since we
+
+evaluate RepoAudit using its default source–sink definitions
+for simulating real-world deployment scenario rather than
+providing them manually like the in-house evaluation, the
+count for Reason B1 is non-zero. Due to page limits, we
+present two representative illustrative examples here, and
+include more detailed examples for the remaining FP reasons
+in Appendix A. As shown in the figures, LLM-based and
+traditional methods share two major sources of false positives: (1) Shallow Interprocedural Reasoning (A1). To limit
+analysis complexity, most tools rely either on source–sink
+style reasoning or on fixed-depth call-graph exploration. For
+example, RepoAudit explores three layers of function calls
+from each specified source by default, and traditional static
+analyzers such as CodeQL are configured with explicit source
+and sink definitions and track data flows only along the
+extracted source–sink paths. However, in real-world projects,
+where data may originate from diverse entry points and propagate through rich, multi-hop control-data paths, such restricted
+flow modeling often fails to capture the full chain from input
+to output, leading to extensive false positives. (2) Inaccurate
+identification of sources and sinks (B1), where tools either
+misclassify benign program points as security-relevant or fail
+to correctly interpret the semantics of API usages. As shown in
+Figure 6, the LLM misidentifies the variable new as a pointer
+to newly allocated memory in C++ and assumes it may be
+NULL. However, new is an unsigned char variable that
+is assigned a value at line 13 and therefore cannot be NULL.
+However, throughout the entire reasoning process on this path,
+the LLM fails to recognize this and continues to treat the use
+of new as a potentially NPD vulnerability at line 17.
+Beyond the shared sources of false positives, we further
+analyze the reasons unique to LLM-based vulnerability detection methods. Although LLMs exhibit strong code analysis
+abilities, their performance on vulnerability detection still
+faces several inherent limitations: First, LLMs often fail
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+10
+
+FPs due to shallow or missing
+A1.Shallow Interprocedural Reasoning project-level dataflow analysis
+
+A.Limited Context &
+Dataflow Consctruction
+
+FPs due to wrong execution
+paths in complex control flows
+
+A2.Incorrect Control Flow
+
+FP Reasons
+
+B.Misidentification of
+Sources or Sinks
+
+B1.Incorrect Source/Sink Selection FPs due to assigning wrong program
+point as source/sink
+
+C.Prompt Misalignment
+
+C1.Prompt Deviations
+
+FPs due to LLM not following the prompt or
+CWE definition properly
+
+D1.Missed Key Program Points
+
+FPs due to overlooked null-checks,
+sanitizers, or resource-release points
+
+D2.Poor Language-Feature Support FPs due to misunderstanding the features of
+Java/C++(constructor, try-with-resources...)
+
+D.Code Semantics
+Misinterpretation
+
+D3.Path-Insensitive Analysis
+
+FPs due to reporting flows that cannot reach
+at runtime
+
+D4.Type/Structure Blindness
+
+FPs due to ignoring the information of type/
+structure/class...
+
+Fig. 4: Taxonomy of FP reasons that are related to the cases detected by the selected methods.
+
+FP reason
+
+RepoAudit Knighter
+
+IRIS
+
+LLMDFA INFERROI CodeQL Semgrep
+
+A1
+
+11/65
+(16.9%)
+
+0/29
+(0.0%)
+
+54/101
+(53.5%)
+
+6/14
+(42.9%)
+
+7/28
+(25.0%)
+
+32/77
+(41.6%)
+
+35/49
+(71.4%)
+
+A2
+
+16/65
+(24.6%)
+
+7/29
+(24.1%)
+
+0/101
+(0.0%)
+
+0/14
+(0.0%)
+
+0/28
+(0.0%)
+
+1/77
+(1.3%)
+
+0/49
+(0.0%)
+
+B1
+
+12/65
+(18.5%)
+
+17/29
+(58.6%)
+
+15/101
+(14.9%)
+
+8/14
+(57.1%)
+
+8/28
+(28.6%)
+
+9/77
+(11.7%)
+
+2/49
+(4.1%)
+
+C1
+
+11/65
+(16.9%)
+
+0/29
+(0.0%)
+
+19/101
+(18.8%)
+
+0/14
+(0.0%)
+
+0/28
+(0.0%)
+
+0/77
+(0.0%)
+
+0/49
+(0.0%)
+
+D1
+
+6/65
+(9.2%)
+
+1/29
+(3.4%)
+
+12/101
+(11.9%)
+
+0/14
+(0.0%)
+
+3/28
+(10.7%)
+
+20/77
+(26.0%)
+
+4/49
+(8.2%)
+
+D2
+
+2/65
+(3.1%)
+
+0/29
+(0.0%)
+
+1/101
+(1.0%)
+
+0/14
+(0.0%)
+
+10/28
+(35.7%)
+
+4/77
+(5.2%)
+
+6/49
+(12.2%)
+
+D3
+
+0/65
+(0.0%)
+
+3/29
+(10.3%)
+
+0/101
+(0.0%)
+
+0/14
+(0.0%)
+
+0/28
+(0.0%)
+
+7/77
+(9.1%)
+
+0/49
+(0.0%)
+
+D4
+
+7/65
+(10.8%)
+
+1/29
+(3.4%)
+
+0/101
+(0.0%)
+
+0/14
+(0.0%)
+
+0/28
+(0.0%)
+
+4/77
+(5.2%)
+
+2/49
+(4.1%)
+
+100
+80
+60
+40
+20
+0
+
+Fig. 5: Distribution of false positive reasons introduced by evaluated methods.
+
+linux/sound/pci/ice1712/wtm.c
+1. static int stac9460_mic_sw_put(struct snd_kcontrol *kcontrol,
+2.
+struct snd_ctl_elem_value *ucontrol)
+3. {
+4.
+struct snd_ice1712 *ice = snd_kcontrol_chip(kcontrol);
+5. 1 unsigned char new, old;
+. . .
+13. 2 new = (ucontrol->value.enumerated.item[0] << 7 & 0x80) | (old &
+~0x80);
+14.
+change = (new != old);
+15.
+if (change) {
+16.
+if (id == 0)
+17. 3
+stac9460_put(ice, STAC946X_GENERAL_PURPOSE, new);
+. . .
+21.
+return change;
+22. }
+
+There are no null checks or conflicting
+conditions that prevent the flow of `new` to
+`val` in `stac9460_2_put` when the conditions are
+satisfied.
+
+Fig. 6: An illustrating FP example of reason B1
+
+to recover the correct execution flow in the presence
+of complex control structures (Reason A2). For example,
+24.6% of RepoAudit’s false positives arise because it overlooks key control-flow branches or constructs an incorrect
+
+data-flow graph, causing the detector to analyze paths that do
+not actually exist in the program. There is another interesting
+example in Figure 7, in the vim project, there are two
+gui_mch_destroy_scrollbar functions with the same
+signature, defined in gui_haiku.cc and gui_w32.c to
+support different operating systems. In practice, these two
+functions cannot be invoked together in a single build. However, when the LLM analyzes the two consecutive invocations of gui_mch_destroy_scrollbar in window.c,
+it incorrectly concludes that the first call resolves to the
+implementation in gui_haiku.cc and the second to the
+implementation in gui_w32.c, merging mutually exclusive
+execution paths and leading to an incorrect understanding of
+the program behavior. Second, LLMs frequently overlook
+implicit sanitization logic within a dataflow (Reason D1).
+Four out of five selected LLM-based methods suffer noticeably
+from this issue, leading them to flag dataflows as vulnerable
+even when proper sanitizers exist along the path. Finally,
+LLMs sometimes do not follow the prompt or CWE
+definition well (Reason C1). Both RepoAudit and IRIS
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+11
+
+TABLE VII: Computational overhead of evaluated tools on real-world projects. – represents tools that do not rely on LLMs.
+Input Tokens (K)
+
+Tool
+RepoAudit
+KNighter
+IRIS
+LLMDFA
+INFERROI
+CodeQL
+Semgrep
+
+Output Tokens (K)
+
+Time (min)
+
+Min
+
+Max
+
+Avg
+
+Min
+
+Max
+
+Avg
+
+Min
+
+Max
+
+Avg
+
+748.51
+20.39
+8.47
+2,535.12
+142.50
+–
+–
+
+225,493.97
+131.66
+1,752.77
+38,310.33
+2,871.49
+–
+–
+
+45,078.21
+48.16
+508.77
+17,445.71
+1,193.45
+–
+–
+
+102.44
+3.78
+1.45
+69.50
+64.51
+–
+–
+
+38,078.26
+70.07
+267.13
+2,646.89
+1,408.23
+–
+–
+
+6,561.46
+17.07
+87.70
+1,199.05
+575.84
+–
+–
+
+7.02
+37.55
+2.55
+44.00
+20.25
+0.21
+0.07
+
+2,450.41
+221.51
+2,089.47
+4,638.00
+176.27
+378.95
+2.43
+
+448.31
+144.09
+213.44
+2,000.00
+78.10
+21.29
+0.64
+
+flag benign code as vulnerable or report issues that do not
+conform to the CWE definitions specified in the prompt. The
+corresponding examples are shown in our Appendix A. These
+findings suggest that although LLMs are capable of reasoning
+about code semantics, reliably capturing precise and complete
+program behavior in complex real-world projects, as well
+as strictly adhering to prompt specifications, remain major
+challenges.
+vim/src/window.c
+1.
+static void
+2. win_free(
+3.
+win_T *wp,
+4.
+tabpage_T *tp)
+1
+5. {
+. . .
+114. #ifdef FEAT_GUI
+115.
+if (gui.in_use)
+116. {
+117.
+gui_mch_destroy_scrollbar(
+&wp->w_scrollbars[SBAR_LEFT]);
+118.
+gui_mch_destroy_scrollbar(
+&wp->w_scrollbars[SBAR_RIGHT]);
+119.
+}
+3
+120. #endif // FEAT_GUI
+. . .
+
+vim/src/gui_haiku.cc
+1. void
+2. 2 gui_mch_destroy_scrollbar(
+3.
+scrollbar_T *sb)
+4. {
+. . .
+7.
+delete sb->id;
+. . .
+11.}
+vim/src/gui_w32.c
+1. 4 void
+2. gui_mch_destroy_scrollbar(
+scrollbar_T *sb)
+3. {
+4.
+DestroyWindow(sb->id);
+5.}
+
+Fig. 7: An illustrating FP example of reason A2
+
+Finding 3: False positives are dominated by shallow
+dataflow reasoning (A1), imprecise source–sink identification (B1), which account for 37.47% (136/363) and
+19.00% (69/363) of the total FPs, respectively. LLMbased tools further incur errors due to hallucinated
+code understanding/reasoning, and imperfect adherence
+to prompts (Reason A2, C1, D1).
+
+D. RQ4: Detection Overhead at Project Scale
+One primary concern for LLM-based methods is their
+cost and efficiency. In this research question, we measure
+the token consumption and time cost of the selected tools.
+Table VII reports the average overhead of these methods,
+and more detailed statistics are provided in Appendix C.
+Overall, LLM-based vulnerability detection methods impose
+substantial computational costs, raising practical concerns
+for project-scale adoption. Among all LLM-based methods,
+RepoAudit and LLMDFA exhibit the highest computational
+overhead on C/C++ and Java projects, respectively. RepoAudit
+can consume more than 225 million input tokens and more
+than 38 million output tokens for a single project, resulting
+
+in an average analysis time of over 448 minutes (more
+than 7 hours) per project. Similarly, LLMDFA also incurs
+extremely high token consumption, up to 38 million output
+tokens, and requires 2000 minutes (more than 33 hours) on
+average to analyze a single Java project. These results indicate
+that current LLM-based approaches face a severe scalability
+challenge when applied to large real-world repositories. In
+contrast, hybrid approaches such as IRIS and INFERROI,
+which integrate LLMs with static analysis, show more moderate overhead, though still requiring hundreds of thousands to
+millions of tokens and multi-hour runtimes for large projects.
+These results indicate that current LLM-based vulnerability
+detection methods remain computationally expensive, and their
+scalability is highly sensitive to prompting strategies and
+detection workflows, posing practical challenges for project
+scale adoption.
+In contrast, traditional tools (CodeQL and Semgrep) incur
+negligible overhead, completing analysis within seconds to
+minutes. This difference emphasizes a significant scalability
+gap: while LLM-based methods provide stronger semantic
+reasoning capabilities, they do so at the cost of significantly
+higher computational resources. These results suggest that
+improving cost efficiency, through better context pruning,
+incremental analysis, or lighter-weight LLM pipelines, remains
+essential before LLM-based vulnerability detectors can be
+deployed reliably at the project scale.
+Finding 4: Project-scale LLM-based vulnerability detection is computationally expensive and time-consuming. A
+single project can require up to hundreds of millions of
+tokens and a multi-day running time, making scalability
+a critical bottleneck.
+
+VI. D ISCUSSION
+A. Implications
+Our comprehensive analysis across five LLM-based vulnerability detectors and two traditional tools reveals that, although LLMs offer promising semantic reasoning capabilities
+and the potential to generalize beyond manually modeled
+security patterns, they remain far from mature enough for
+reliable vulnerability analysis in real-world scenarios. Despite
+demonstrating an ability to infer higher-level intentions that
+traditional static tools often miss, current LLM-based methods
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+suffer from several practical limitations that restrict their
+effectiveness:
+(1) Dataflow reasoning is shallow and incomplete. LLMbased tools frequently construct partial or truncated dataflows,
+capturing only short caller-callee chains or dataflow paths
+(e.g., RepoAudit by default expands only three layers of the
+call-graph, and extending this depth results in exponential
+prompt growth and token cost). Consequently, risk is often
+inferred from local evidence without the global execution
+context, causing models to overlook sanitization or correct sink
+behavior that occurs further along the program path. Shallow
+dataflow is therefore a fundamental bottleneck: when the full
+path from “input → propagation → output” is not analyzed
+holistically, real vulnerabilities may be missed, while safe code
+is frequently misclassified as risky.
+(2) Imprecise source-sink identification. Based on our experiments, a considerable portion of FNs and FPs is due
+to the inaccurate classification of sources or sinks. In realworld projects, sources may be wrapped or abstracted behind
+project-specific APIs, propagate through multiple layers before
+reaching sinks, or be triggered via reflection, callbacks, and
+framework-driven lifecycle events. Although several LLMbased approaches (IRIS, LLMDFA) attempt to infer projectspecific or vulnerability-specific sources/sinks via prompting,
+the inferred results are often unreliable in practice (e.g., IRIS
+mislabels Map.put() as a sink in Java projects, resulting in
+an amount of FPs). Thus, robust and context-aware source-sink
+inference remains an unresolved challenge.
+(3) Semantic understanding in complex contexts remains
+limited. As shown in Section V-C, a substantial portion of
+false positives produced by LLM-based vulnerability detectors stems from the misinterpretation of code semantics. In
+many cases, models overlook key program points along a
+dataflow (e.g., a sanitizer, a deferred release, a null-check,
+or a conditional exit), or fail to infer the actual execution
+behavior of code due to language-specific constructs such as
+try-with-resources, destructors, template expansion, or macrocontrolled branching. These semantic gaps often cause LLMs
+to reason along incorrect control paths or assume unsafe
+behavior where none exists, ultimately misclassifying benign code as vulnerable. We suggest future work strengthen
+semantic reasoning through hybrid workflows, augmenting
+LLMs with intermediate program representations, graph-based
+context retrieval, and static analysis signals to provide more
+complete execution context [15], [62].
+(4) Prompt-alignment and task compliance are inconsistent. In our evaluation, we observe that methods such
+as RepoAudit and IRIS, which rely on LLMs to perform
+reasoning over extracted dataflows, may still fail to adhere
+to the intended vulnerability definition or CWE scope in the
+prompt. Even when the reasoning is correct at a syntactic or
+control-flow level, the model occasionally drifts from the task
+objective, producing conclusions that do not align with the
+vulnerability type under detection—reflecting semantic drift
+and task-misalignment. To improve this, future systems may
+require structured multi-agent collaboration, self-verification
+modules, or constraint-guided reasoning to enforce consistent
+detection goals [63], [64].
+
+12
+
+(5) Scalability remains the bottleneck. Project-scale analysis demands enormous computational overhead. As shown
+in Section V-D, RepoAudit and LLMDFA consume up to
+hundreds of millions of tokens and require hours to days to
+complete a single project, making them unsuitable for continuous integration. This observation aligns with both the authors’
+discussions in their papers and the feedback we received from
+them, who confirmed that the current implementations may
+incur substantial computational overhead when analyzing large
+projects. Hybrid approaches (IRIS, INFERROI) reduce, but
+do not eliminate, the high cost. To achieve scalable detection,
+future work may adopt hierarchical analysis, reuse intermediate reasoning through caching, and minimize redundant LLM
+calls [62].
+B. Threats to Validity
+Internal Validity Our analysis involves expert judgment.
+Although two independent authors conducted labeling and
+reconciliation to reduce subjectivity (Section IV), classification
+accuracy may still be influenced by personal experience, interpretation of code semantics, or reasoning about exploitability.
+Misreading or misinterpretation of complex code flows may
+introduce bias into the taxonomy of FP causes. To overcome
+these threats, the two authors adopt an inductive open-coding
+procedure with double coding [61], independently validated
+all sampled cases and resolved any disagreements through
+discussion, and we released all experimental artifacts, including evaluation scripts, prompts, taxonomy labels, and detailed
+statistics for external inspection and replication.
+External Validity Our evaluation considers 5 LLM-based and
+2 traditional vulnerability detectors, selected because they are
+open-source, runnable at the project scale, and representative
+of emerging design workflows. However, they may not fully
+represent all possible architectures, languages, or prompting paradigms. As the field evolves rapidly, future models
+or customized enterprise-scale deployments may demonstrate
+different capabilities. Moreover, our evaluation covers a set
+of real-world repositories across two major programming
+languages (Java, C/C++), but may not generalize uniformly
+to systems written in Rust, Go, TypeScript, or large multilanguage projects.
+VII. C ONCLUSION
+In this paper, we conduct the first comprehensive study of
+specialized LLM-based vulnerability detectors at the project
+scale, analyzing 5 representative LLM-based tools and comparing them against 2 traditional static analysis tools. Our
+evaluation begins with 222 known vulnerabilities spanning 8
+CWE types, where we observe that current approaches often
+fail to identify these vulnerabilities, primarily due to inaccurate
+source-sink identification. We then scale our analysis to 24
+open-source projects and manually examine 385 sampled
+reports. From this investigation, we construct a taxonomy of
+false positive causes and quantify how different tools are affected. Our findings reveal that although LLM-based methods
+exhibit stronger performance than traditional static analyzers,
+they still face fundamental challenges in dataflow construction,
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+source-sink identification, and deep semantic understanding.
+Furthermore, our runtime and token usage measurements show
+that scalability remains a core bottleneck, especially for endto-end LLM workflows. Finally, to support future progress in
+this domain, we distill our observations into 5 implications
+for the research community. We hope this work can inspire
+future designs that make automated security detection both
+more accurate and more practical in real-world scenarios.
+R EFERENCES
+[1] B. Chess and G. McGraw, “Static analysis for security,” IEEE security
+& privacy, vol. 2, no. 6, pp. 76–79, 2004.
+[2] V. J. Manès, H. Han, C. Han, S. K. Cha, M. Egele, E. J. Schwartz, and
+M. Woo, “The art, science, and engineering of fuzzing: A survey,” IEEE
+Transactions on Software Engineering, vol. 47, no. 11, pp. 2312–2331,
+2019.
+[3] P. Li, S. Yao, J. S. Korich, C. Luo, J. Yu, Y. Cao, and J. Yang,
+“Automated static vulnerability detection via a holistic neuro-symbolic
+approach,” arXiv preprint arXiv:2504.16057, 2025.
+[4] SpotBugs Team, “Spotbugs: Find bugs in java programs,” https://
+spotbugs.github.io/, accessed: 2025-12-10.
+[5] GitHub, “Codeql,” https://codeql.github.com/, accessed: 2025-10-13.
+[6] The Semgrep platform, “Semgrep,” https://semgrep.dev/, accessed:
+2025-10-13.
+[7] Amazon Web Services, “Amazon codeguru,” https://aws.amazon.com/
+codeguru/, accessed: 2025-12-10.
+[8] SonarSource, “Sonarqube,” https://www.sonarqube.org/, accessed: 202512-10.
+[9] F. Yamaguchi, N. Golde, D. Arp, and K. Rieck, “Modeling and
+discovering vulnerabilities with code property graphs,” in Proceedings
+of the 2014 IEEE Symposium on Security and Privacy (S&P), 2014.
+[Online]. Available: https://ieeexplore.ieee.org/document/6956589
+[10] V. B. Livshits and M. S. Lam, “Finding security vulnerabilities in
+java applications with static analysis.” in USENIX security symposium,
+vol. 14, 2005, pp. 18–18.
+[11] J. Smith, B. Johnson, E. Murphy-Hill, B. Chu, and H. R. Lipford, “Questions developers ask while diagnosing potential security vulnerabilities
+with static analysis,” in Proceedings of the 2015 10th Joint Meeting on
+Foundations of Software Engineering, 2015, pp. 248–259.
+[12] Z. Li, S. Dutta, and M. Naik, “Llm-assisted static analysis
+for detecting security vulnerabilities,” in International Conference
+on Learning Representations, 2025. [Online]. Available: https:
+//arxiv.org/abs/2405.17238
+[13] S. Cao, X. Sun, L. Bo, R. Wu, B. Li, X. Wu, C. Tao, T. Zhang,
+and W. Liu, “Learning to detect memory-related vulnerabilities,” ACM
+Transactions on Software Engineering and Methodology, vol. 33, no. 2,
+pp. 1–35, 2023.
+[14] W. Charoenwet, P. Thongtanunam, V.-T. Pham, and C. Treude, “An
+empirical study of static analysis tools for secure code review,” in
+Proceedings of the 33rd ACM SIGSOFT international symposium on
+software testing and analysis, 2024, pp. 691–703.
+[15] G. Lu, X. Ju, X. Chen, W. Pei, and Z. Cai, “Grace: Empowering
+llm-based software vulnerability detection with graph structure and incontext learning,” Journal of Systems and Software, vol. 212, p. 112031,
+2024.
+[16] Y. Sun, D. Wu, Y. Xue, H. Liu, H. Wang, Z. Xu, X. Xie, and
+Y. Liu, “Gptscan: Detecting logic vulnerabilities in smart contracts by
+combining gpt with program analysis,” in Proceedings of the IEEE/ACM
+46th International Conference on Software Engineering, 2024, pp. 1–13.
+[17] C. Zhang, H. Liu, J. Zeng, K. Yang, Y. Li, and H. Li, “Promptenhanced software vulnerability detection using chatgpt,” in Proceedings
+of the 2024 IEEE/ACM 46th International Conference on Software
+Engineering: Companion Proceedings, 2024, pp. 276–277.
+[18] Y. Jiang, Y. Zhang, X. Su, C. Treude, and T. Wang, “Stagedvulbert:
+Multi-granular vulnerability detection with a novel pre-trained code
+model,” IEEE Transactions on Software Engineering, 2024.
+[19] S. Halder, M. E. Ahmed, and S. Camtepe, “Funcvul: An effective
+function level vulnerability detection model using llm and code chunk,”
+in European Symposium on Research in Computer Security. Springer,
+2025, pp. 166–185.
+[20] P. Liu, J. Liu, L. Fu, K. Lu, Y. Xia, X. Zhang, W. Chen, H. Weng, S. Ji,
+and W. Wang, “Exploring {ChatGPT’s} capabilities on vulnerability
+management,” in 33rd USENIX Security Symposium (USENIX Security
+24), 2024, pp. 811–828.
+
+13
+
+[21] J. Guo, C. Wang, X. Xu, Z. Su, and X. Zhang, “Repoaudit:
+An autonomous LLM-agent for repository-level code auditing,” in
+Forty-second International Conference on Machine Learning, 2025.
+[Online]. Available: https://openreview.net/forum?id=TXcifVbFpG
+[22] C. Wang, W. Zhang, Z. Su, X. Xu, X. Xie, and X. Zhang, “Llmdfa:
+analyzing dataflow in code with large language models,” Advances in
+Neural Information Processing Systems, vol. 37, pp. 131 545–131 574,
+2024.
+[23] C. Yang, Z. Zhao, Z. Xie, H. Li, and L. Zhang, “Knighter: Transforming
+static analysis with llm-synthesized checkers,” in Proceedings of the
+ACM SIGOPS 31st Symposium on Operating Systems Principles, 2025,
+pp. 655–669.
+[24] A. Lekssays, H. Mouhcine, K. Tran, T. Yu, and I. Khalil,
+“{LLMxCPG}:{Context-Aware} vulnerability detection through code
+property {Graph-Guided} large language models,” in 34th USENIX
+Security Symposium (USENIX Security 25), 2025, pp. 489–507.
+[25] C. Wang, J. Liu, X. Peng, Y. Liu, and Y. Lou, “Boosting static resource
+leak detection via llm-based resource-oriented intention inference,” in
+2025 IEEE/ACM 47th International Conference on Software Engineering (ICSE). IEEE Computer Society, 2025, pp. 668–668.
+[26] X.-C. Wen, X. Wang, Y. Chen, R. Hu, D. Lo, and C. Gao, “Vuleval:
+Towards repository-level evaluation of software vulnerability detection,”
+arXiv preprint arXiv:2404.15596, 2024.
+[27] M. D. Purba, A. Ghosh, B. J. Radford, and B. Chu, “Software vulnerability detection using large language models,” in 2023 IEEE 34th
+International Symposium on Software Reliability Engineering Workshops
+(ISSREW). IEEE, 2023, pp. 112–119.
+[28] J. Lin and D. Mohaisen, “From large to mammoth: A comparative
+evaluation of large language models in vulnerability detection,” in
+Proceedings of the 2025 Network and Distributed System Security
+Symposium (NDSS), 2025.
+[29] A. Yildiz, S. G. Teo, Y. Lou, Y. Feng, C. Wang, and D. M. Divakaran,
+“Benchmarking llms and llm-based agents in practical vulnerability
+detection for code repositories,” in Proceedings of the 63rd Annual
+Meeting of the Association for Computational Linguistics (Volume 1:
+Long Papers), 2025, pp. 30 848–30 865.
+[30] C. Thapa, S. I. Jang, M. E. Ahmed, S. Camtepe, J. Pieprzyk, and
+S. Nepal, “Transformer-based language models for software vulnerability detection,” in Proceedings of the 38th annual computer security
+applications conference, 2022, pp. 481–496.
+[31] S. Ullah, M. Han, S. Pujar, H. Pearce, A. Coskun, and G. Stringhini,
+“Llms cannot reliably identify and reason about security vulnerabilities
+(yet?): A comprehensive evaluation, framework, and benchmarks,” in
+2024 IEEE symposium on security and privacy (SP). IEEE, 2024, pp.
+862–880.
+[32] Z. Gao, H. Wang, Y. Zhou, W. Zhu, and C. Zhang, “How far have
+we gone in vulnerability detection using large language models,” arXiv
+preprint arXiv:2311.12420, 2023.
+[33] B. Steenhoek, M. M. Rahman, M. K. Roy, M. S. Alam, E. T. Barr, and
+W. Le, “A comprehensive study of the capabilities of large language
+models for vulnerability detection,” CoRR, 2024.
+[34] A. Khare, S. Dutta, Z. Li, A. Solko-Breslin, R. Alur, and M. Naik,
+“Understanding the effectiveness of large language models in detecting
+security vulnerabilities,” in 2025 IEEE Conference on Software Testing,
+Verification and Validation (ICST). IEEE, 2025, pp. 103–114.
+[35] OpenAI, J. Achiam, S. Adler et al., “Gpt-4 technical report,”
+arXiv preprint arXiv:2303.08774, 2023. [Online]. Available: https:
+//arxiv.org/abs/2303.08774
+[36] Anthropic, “The claude 3 model family: Opus, sonnet, haiku,” 2024,
+technical Report. [Online]. Available: https://www-cdn.anthropic.com/
+de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model Card Claude
+3.pdf
+[37] R. Anil, S. Borgeaud, J.-B. Alayrac et al., “Gemini: A family of highly
+capable multimodal models,” arXiv preprint arXiv:2312.11805, 2023.
+[Online]. Available: https://arxiv.org/abs/2312.11805
+[38] T. Ahmed, K. S. Pai, P. Devanbu, and E. T. Barr, “Automatic
+semantic augmentation of language model prompts (for code
+summarization),” in Proceedings of the 46th International Conference
+on Software Engineering (ICSE), 2024. [Online]. Available: https:
+//dl.acm.org/doi/10.1145/3597503.3639183
+[39] Y. Dong, X. Jiang, J. Qian, T. Wang, K. Zhang, Z. Jin, and G. Li,
+“A survey on code generation with llm-based agents,” arXiv preprint
+arXiv:2508.00083, 2025.
+[40] M. Fu, C. Tantithamthavorn, T. Le, V. Nguyen, and D. Phung, “Vulrepair: a t5-based automated software vulnerability repair,” in Proceedings
+of the 30th ACM joint european software engineering conference and
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+symposium on the foundations of software engineering, 2022, pp. 935–
+947.
+[41] T. Brown, B. Mann, N. Ryder, M. Subbiah et al., “Language
+models are few-shot learners,” in Advances in Neural Information
+Processing Systems (NeurIPS), 2020. [Online]. Available: https:
+//dl.acm.org/doi/abs/10.5555/3495724.3495883
+[42] J. Wei, X. Wang, D. Schuurmans et al., “Chain-of-thought
+prompting elicits reasoning in large language models,” in Advances
+in Neural Information Processing Systems (NeurIPS), 2022.
+[Online]. Available: https://proceedings.neurips.cc/paper files/paper/
+2022/file/9d5609613524ecf4f15af0f7b31abca4-Paper-Conference.pdf
+[43] Q. Wu, G. Bansal, J. Zhang, Y. Wu et al., “Autogen: Enabling
+next-gen llm applications via multi-agent conversation,” in Proceedings
+of the 12th International Conference on Learning Representations
+(ICLR), 2024. [Online]. Available: https://openreview.net/forum?id=
+tEAF9LBdgu
+[44] GrammaTech,
+“Codesonar,”
+https://www.grammatech.com/
+codesonar-cc, accessed: 2025-12-10.
+[45] Facebook, “Infer static analyzer,” https://github.com/facebook/infer, accessed: 2025-10-13.
+[46] Y. Zhou, S. Liu, J. Siow, X. Du, and Y. Liu, “Devign: Effective vulnerability identification by learning comprehensive program semantics
+via graph neural networks,” Advances in neural information processing
+systems, vol. 32, 2019.
+[47] Y. Li, S. Wang, and T. N. Nguyen, “Vulnerability detection with finegrained interpretations,” in Proceedings of the 29th ACM Joint Meeting
+on European Software Engineering Conference and Symposium on the
+Foundations of Software Engineering, 2021, pp. 292–303.
+[48] M. Fu and C. Tantithamthavorn, “Linevul: A transformer-based linelevel vulnerability prediction,” in Proceedings of the 19th International
+Conference on Mining Software Repositories, 2022, pp. 608–620.
+[49] Z. Li, D. Zou, S. Xu, X. Ou, H. Jin, S. Wang, and Z. Deng,
+“Sysevr: A framework for using deep learning to detect software
+vulnerabilities,” IEEE Transactions on Dependable and Secure
+Computing (TDSC), vol. 19, no. 4, pp. 2244–2258, 2022. [Online].
+Available: https://ieeexplore.ieee.org/document/9321538
+[50] X. Cheng, H. Wang, J. Hua, G. Xu, and Y. Sui, “Deepwukong: Statically
+detecting software vulnerabilities using deep graph convolutional
+neural networks,” ACM Transactions on Software Engineering and
+Methodology (TOSEM), vol. 30, no. 3, pp. 1–33, 2021. [Online].
+Available: https://dl.acm.org/doi/10.1145/3436877
+[51] R. Croft, M. A. Babar, and M. M. Kholoosi, “Data quality for software
+vulnerability datasets,” in 2023 IEEE/ACM 45th International Conference on Software Engineering (ICSE). IEEE, 2023, pp. 121–133.
+[52] N. Risse, J. Liu, and M. Böhme, “Top score on the wrong exam:
+On benchmarking in machine learning for vulnerability detection,”
+Proceedings of the ACM on Software Engineering, vol. 2, no. ISSTA,
+pp. 388–410, 2025.
+[53] X. Wang, R. Hu, C. Gao, X.-C. Wen, Y. Chen, and Q. Liao, “Reposvul:
+A repository-level high-quality vulnerability dataset,” in Proceedings
+of the 2024 IEEE/ACM 46th International Conference on Software
+Engineering: Companion Proceedings, 2024, pp. 472–483.
+[54] T. Liu, W. Ji, X. Dong, W. Yao, Y. Wang, H. Liu, H. Peng, and Y. Wang,
+“Jleaks: A featured resource leak repository collected from hundreds
+of open-source java projects,” in Proceedings of the IEEE/ACM 46th
+International Conference on Software Engineering, 2024, pp. 1–13.
+[55] Clang and LLVM, “Clang static analyzer,” https://clang-analyzer.llvm.
+org/, accessed: 2025-10-12.
+[56] L. De Moura and N. Bjørner, “Z3: An efficient smt solver,” in International conference on Tools and Algorithms for the Construction and
+Analysis of Systems. Springer, 2008, pp. 337–340.
+[57] OpenAI, “O3-mini,” https://platform.openai.com/docs/models/o3-mini,
+accessed: 2025-10-13.
+[58] ——, “Gpt-4,” https://platform.openai.com/docs/models/gpt-4, accessed:
+2025-10-13.
+[59] Anthropic, “Claude 3.5 sonnet,” https://platform.claude.com/docs/en/
+about-claude/models/overview, accessed: 2025-10-13.
+[60] Homepage,
+2025,
+available
+at:
+https://github.com/Feng-Jay/
+LLM4Security.
+[61] N. K. Denzin and Y. S. Lincoln, The Sage handbook of qualitative
+research. sage, 2011.
+[62] N. Dhulshette, S. Shah, and V. Kulkarni, “Hierarchical repository-level
+code summarization for business applications using local llms,” in 2025
+IEEE/ACM International Workshop on Large Language Models for Code
+(LLM4Code). IEEE, 2025, pp. 145–152.
+
+14
+
+[63] I. Bouzenia, P. Devanbu, and M. Pradel, “Repairagent: An autonomous,
+llm-based agent for program repair,” arXiv preprint arXiv:2403.17134,
+2024.
+[64] R. Hong, H. Zhang, X. Pang, D. Yu, and C. Zhang, “A closer look at the
+self-verification abilities of large language models in logical reasoning,”
+in Proceedings of the 2024 Conference of the North American Chapter
+of the Association for Computational Linguistics: Human Language
+Technologies (Volume 1: Long Papers), 2024, pp. 900–925.
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+1
+
+entry.setAdmin("admins"); entry.setAdmin("users"); entry.setAdmin("guests,users");
+. . .
+activemq/activemq-broker/…/security/AuthorizationEntry.java
+1. public void setAdmin(String roles) throws Exception {
+2.
+adminRoles = roles;
+3.
+setAdminACLs(parseACLs(adminRoles));
+4. }
+1. protected Set<Object> parseACLs(String roles) throws Exception {
+2.
+Set<Object> answer = new HashSet<Object>();
+3.
+StringTokenizer iter = new StringTokenizer(roles, ",");
+4.
+while (iter.hasMoreTokens()) {
+5.
+String name = iter.nextToken().trim();
+6.
+String groupClass = (this.groupClass != null ?
+this.groupClass : DefaultAuthorizationMap.DEFAULT_GROUP_CLASS);
+7.
+answer.add(DefaultAuthorizationMap.createGroupPrincipal(name, 9.
+groupClass));
+8.
+}
+9.
+return answer;
+10.}
+
+activemq/activemq-broker/…/security/DefaultAuthorizationMap.java
+1.
+
+public static Object createGroupPrincipal(
+String name, String groupClass) throws Exception {
+if (WILDCARD.equals(name)) {
+. . .
+19.
+}
+20.
+Object[] param = new Object[]{name};
+21.
+22.
+Class<?> cls = Class.forName(groupClass);
+23.
+24.
+Constructor<?>[] constructors = cls.getConstructors();
+25.
+int i;
+26.
+Object instance;
+. . .
+33.
+if (i < constructors.length) {
+34.
+instance = constructors[i].newInstance(param);
+35.
+} else {
+constructors[i].newInstance(param) can lead
+. . .
+to a Code Injection vulnerability if
+54. }
+2.
+
+'param' contains malicious data.
+
+Fig. 8: An illustrating example FP reported by IRIS of reason A1
+
+A PPENDIX A
+C ASE S TUDY
+In RQ3 (Section V-C), we introduced a taxonomy of falsepositive (FP) causes detected by the selected methods and
+showcased two representative examples for categories A2 and
+B1. In this section, we present the remaining examples of all
+9 categories.
+1) Example Program for Reason A1: Figure 8 illustrates an
+FP reported by IRIS in the apache/activemq project. IRIS
+(via the LLM) flags the creation of a new instance with param
+as a potential code-injection risk, assuming that param may
+contain attacker-controlled content. However, tracing the data
+flow shows that param originates from the roles argument
+of setAdmin, is propagated through parseACLs, and is
+ultimately passed into createGroupPrincipal. Further
+inspection of all call sites of setAdmin in the project
+indicates that the supplied arguments are hard-coded string
+literals (e.g., "admins", "users", . . . ), and therefore cannot contain malicious input. This FP arises because the LLM’s
+analysis considers the data flow starting at roles but does not
+incorporate the concrete invocations of setAdmin, leading it
+to incorrectly treat param as untrusted.
+2) Example Program for Reason C1: Figure 9 is an FP
+due to the prompt deviations (reason C1). As shown in the
+prompt, IRIS explicitly asks the LLM to determine whether
+the dataflow contains a CWE-022 vulnerability, and provides
+the corresponding dataflow details. Based on this information,
+the LLM can infer that the flow starts from reading an attribute
+value from an XML element and then uses it as a parameter
+in a database query. The LLM correctly recognizes that this
+pattern is unrelated to CWE-022 (Path Traversal or Zip Slip).
+Nevertheless, it still labels the code as vulnerable, despite
+being explicitly instructed to judge only whether the provided
+content constitutes a CWE-022 issue.
+3) Example Program for Reason D1: Figure 10 illustrates an FP reported by RepoAudit caused by missing
+a key program point (Reason D1). In this example, req
+may be assigned NULL by peci_request_alloc. RepoAudit infers that this req is subsequently passed to
+peci_request_xfer_retry, where the null pointer is
+dereferenced via req->device, and therefore reports a
+potential null pointer dereference (NPD). However, the tool
+
+Analyze the following dataflow path in a Java project and predict whether it
+contains a Path Traversal or Zip Slip vulnerability (CWE-022).
+Source (getAttributeValue(...) : String):
+```
+public class XSLTIngestionCrosswalk {
+private static void applyDimField(Context context, Element field, Item item,
+boolean createMissingMetadataFields) {
+throws CrosswalkException, SQLException, AuthorizeException {
+String schema = field.getAttributeValue("mdschema");
+String element = field.getAttributeValue("element"); // <---- THIS IS
+THE SOURCE
+String qualifier = field.getAttributeValue("qualifier");
+String lang = field.getAttributeValue("lang");
+String authority = field.getAttributeValue("authority");
+String sconf = field.getAttributeValue("confidence");
+...
+}
+}
+```
+Steps:
+- Step 1 [XSLTIngestionCrosswalk.java:applyDimField]: .checkMetadata(context,
+. . .
+- Step 8 [MetadataFieldDAOImpl.java:find]: public MetadataField find(Context
+context, int metadataFieldId, MetadataSchema metadataSchema, String element,
+Sink (element):
+```
+public class MetadataFieldDAOImpl extends AbstractHibernateDAO<MetadataField>
+implements MetadataFieldDAO {
+public MetadataField find(Context context, int metadataFieldId,
+MetadataSchema metadataSchema, String element, {
+...
+"AND mf.qualifier IS NULL");
+}
+query.setParameter("id", metadataFieldId);
+query.setParameter("name", metadataSchema.getName());
+query.setParameter("element", element); // <---- THIS IS THE SINK
+if (qualifier != null) {
+query.setParameter("qualifier", qualifier);
+}
+...
+}
+}
+```
+The source is a method that retrieves an attribute value from an XML element,
+which can be controlled by an external input if the XML is user-supplied. The
+sink is a database query parameter that uses this value, potentially leading
+to SQL injection if not properly sanitized. However, the vulnerability type
+specified (Path Traversal or Zip Slip) does not match the observed SQL
+injection risk.
+
+Fig. 9: An illustrating example FP reported by IRIS of reason
+C1
+
+overlooks a simple but crucial null-check along this path: when
+req is NULL, the function returns ERR_PTR at line 12, which
+prevents the dereference. Notably, all three related functions
+shown in this figure are located in the same file and involve
+neither complex nor long contexts, yet RepoAudit still fails
+due to this reason.
+4) Example Program for Reason D2: There is an
+FP case reported by INFERROI due to limited support for Java language features (Reason D2). In this
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+linux/drivers/peci/request.c
+1. static struct peci_request *
+2. __ep_pci_cfg_read(...
+...)
+4. {
+5.
+struct peci_request *req;
+6.
+u32 pci_addr;
+7.
+int ret;
+8.
+9. 1 req = peci_request_alloc(...
+10.
+...);
+11.
+if (!req)
+12.
+return ERR_PTR(-ENOMEM);
+. . .
+26. 3 ret = peci_request_xfer_retry(req);
+. . .
+33.}
+
+1. struct peci_request *peci_request_alloc(...)
+2. {
+3.
+struct peci_request *req;
+. . .
+10. if (WARN_ON_ONCE(tx_len > PECI_REQUEST
+_MAX_BUF_SIZE || rx_len > PECI_REQUEST_MAX_BUF
+_SIZE))
+2 return NULL;
+11.
+. . .
+1.static int peci_request_xfer_retry(struct
+peci_request *req)
+2.{
+3. long wait_interval = PECI_RETRY_INTERVAL_MIN;
+4. struct peci_device *device = req->device;
+4
+. . .
+req=NULL!!!
+
+Fig. 10: An illustrating example FP reported by RepoAudit of
+reason D1
+sql2o/core/src/main/java/org/sql2o/Query.java
+1. public Object executeScalar() {
+2.
+long start = System.currentTimeMillis();
+3.
+4.
+logExecution();
+Resource acquire
+5.
+try (final PreparedStatement ps = buildPreparedStatement();
+Resource acquire
+6.
+final ResultSet rs = ps.executeQuery()) {
+7.
+if (rs.next()) {
+8.
+Object o = getQuirks().getRSVal(rs, 1);
+9.
+long end = System.currentTimeMillis();
+10.
+logger.debug("total: {} ms; executed scalar [{}]", new Object[]{
+11.
+end - start,
+12.
+this.getName() == null ? "No name" : this.getName()
+13.
+});
+14.
+return o;
+15.
+} else {
+16.
+return null;
+17.
+}
+18.
+19.
+} catch (SQLException e) {
+20.
+this.connection.onException();
+21.
+throw new Sql2oException("Database error occurred while running executeScalar: "
++ e.getMessage(), e);
+22.
+} finally {
+23.
+closeConnectionIfNecessary(); Leakable Resources:
+24.
+}
+PreparedStatement: ps
+25.
+ResultSet: rs
+26. }
+No API/method Calls for Releasing Resources
+
+Fig. 11: An illustrating example FP reported by INFERROI
+of reason D2
+
+example, the LLM correctly identifies two resourceacquisition operations, buildPreparedStatement()
+and ps.executeQuery(). However, it overlooks that
+both are declared in a try-with-resources statement and thinks there are no API/method calls for resource release. When the block exits, the corresponding
+PreparedStatement and ResultSet are automatically
+closed, so no resource leak occurs.
+linux/src/filters/out_rtp.c
+
+linux/src/utils/list.c
+
+1. GF_EXPORT
+1. GF_Err rtpout_create_sdp(GF_List *streams ...)
+2. u32 gf_list_count(const
+2. {
+GF_List *ptr)
+. . . 1
+3. {
+11. count = gf_list_count(streams);
+count=streams->entryCount 4.
+if (!ptr) return 0;
+12.
+5.
+return ptr->entryCount;
+. . .
+6. }
+82. if (base_pid_id) {
+83. gf_fprintf(sdp_out,"a=group:DDP L%d", base_pid_id)
+linux/src/utils/list.c
+
+i< streams->entryCount
+
+84.2 for (i = 0; i < count; i++) { 3
+85.
+GF_RTPOutStream *st = gf_list_get(streams, i);
+4 if (st->depends_on == base_pid_id) {
+86.
+87.
+gf_fprintf(sdp_out, " L%d", i+1);
+88.
+}
+Potential Null
+89. }
+Pointer Dereference
+90. gf_fprintf(sdp_out, "\n");
+91. }
+. . .
+
+1. GF_EXPORT
+2. void *gf_list_get(GF_List *ptr,
+u32 itemNumber)
+3. {
+. . . Not Reachable!!!
+7.
+if (!ptr || (itemNumber >=
+ptr->entryCount) )
+return NULL;
+. . .
+
+Fig. 12: An illustrating example FP reported by CodeQL of
+reason D3
+5) Example Program for Reason D3: Figure 12 presents an
+FP reported by CodeQL caused by path-insensitive analysis
+(Reason D3). As shown, CodeQL thinks that the call to
+gf_list_get may return NULL and assigns it to st (Line
+85), after which st is dereferenced via st->depends_on
+(Line 86). It therefore flags a potential null-pointer dereference
+(NPD). However, in this context, count is initialized with
+
+2
+
+streams->entryCount (Line 11), which ensures that the
+return NULL; branch in gf_list_get is unreachable.
+Consequently, st cannot be NULL at Line 86, and the reported
+NPD is a false alarm.
+Vim/src/autocmd.c
+
+1.
+2.
+3.
+
+static void
+autocmd_add_or_delete(typval_T *argvars, typval_T *rettv, int delete)
+{
+This `delete` is a variable,
+. . .
+223.
+if (pat != NULL) not delete keyword.
+224.
+{
+225.
+if (do_autocmd_event(event, pat, once, nested, cmd,
+226.
+delete | replace, group, 0) == FAIL)
+pattern: delete $LOCAL_VAR
+227.
+{
+228.
+retval = VVAL_FALSE;
+This expression points to
+229.
+break;
+memory that has been freed.
+230.
+}
+231.
+}
+. . .
+
+Fig. 13: An illustrating example FP reported by Semgrep of
+reason D4
+6) Example Program for Reason D4: There is an FP reported by Semgrep caused by missing type awareness (Reason
+D4). In this example, Semgrep flags a delete operation at
+Line 226 as if it were freeing allocated memory and then being
+used in a subsequent function call. However, delete here is
+an integer parameter rather than the C++ memory-deallocation
+operator, and thus it does not perform any memory-related
+operation. As a result, the reported issue is a false alarm.
+A PPENDIX B
+C ONFIGURATION OF TRADITIONAL STATIC METHODS
+To evaluate CodeQL and Semgrep on the two datasets used
+in this paper, we manually selected from their built-in rule sets
+those checks that are related to the CWE types under study.
+Table VIII and Table IX demonstrate the details rules selected
+for each CWE type. Although different rules may produce
+reports with different severity levels (e.g., some are marked
+as errors and some are only recommendations), we treat them
+equally in this study.
+A PPENDIX C
+D ETAILED OVERHEAD OF S ELECTED M ETHODS
+In Section V-D, we report the average overhead of the evaluated methods on the real-world projects. Here, we provide
+the complete per-project overhead details for each method in
+Table X and Table XI.
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+TABLE VIII: Selected CodeQL rules for each CWE type
+
+CodeQL
+
+CWE-401
+
+Critical/FileMayNotBeClosed.ql, Critical/FileNeverClosed.ql, Critical/MemoryMayNotBeFreed.ql, Critical/MemoryNeverFreed.ql
+Critical/NewArrayDeleteMismatch.ql, Critical/DescriptorMayNotBeClosed.ql, CWE-401/MemoryLeakOnFailedCallToRealloc.ql
+
+CWE-416
+
+Critical/DoubleFree.ql, Critical/UseAfterFree.ql, Critical/ReturnStackAllocatedObject.ql
+CWE-416/IteratorToExpiredContainer.ql, CWE-416/UseOfStringAfterLifetimeEnds.ql, CWE-416/UseOfUniquePointerAfterLifetimeEnds.ql
+
+CWE-476
+
+Critical/InconsistentNullnessTesting.ql, Critical/MissingNullTest.ql, Critical/NotInitialised.ql
+CWE-476/DangerousUseOfExceptionBlocks.ql, Critical/GlobalUseBeforeInit.ql
+
+CWE-022
+
+CWE-022/TaintedPath.ql, CWE-022/ZipSlip.ql
+
+CWE-078
+
+CWE-078/ExecRelative.ql, CWE-078/ExecTainted.ql, CWE-078/ExecTaintedEnvironment.ql
+CWE-078/ExecUnescaped.ql, experimental/CWE-078/ExecTainted.ql, experimental/CWE-078/CommandInjectionRuntimeExec.ql
+experimental/CWE-078/CommandInjectionRuntimeExecLocal.ql
+
+CWE-079
+
+CWE-079/AndroidWebViewAddJavascriptInterface.ql, CWE-079/AndroidWebViewSettingsEnabledJavaScript.ql, CWE-079/XSS.ql
+
+CWE-094
+
+CWE-094/ArbitraryApkInstallation.ql, CWE-094/GroovyInjection.ql, CWE-094/InsecureBeanValidation.ql, CWE-094/JexlInjection.ql
+CWE-094/MvelInjection.ql, CWE-094/SpelInjection.ql, CWE-094/TemplateInjection.ql, experimental/CWE-094/BeanShellInjection.ql
+experimental/CWE-094/InsecureDexLoading.ql, experimental/CWE-094/JakartaExpressionInjection.ql
+experimental/CWE-094/JShellInjection.ql, experimental/CWE-094/JythonInjection.ql, experimental/CWE-094/SpringViewManipulation.ql
+experimental/CWE-094/ScriptInjection.ql, experimental/CWE-094/SpringImplicitViewManipulation.ql
+
+CWE-722
+
+Resource Leaks/CloseReader.ql, Resource Leaks/CloseSql.ql, Resource Leaks/CloseWriter.ql
+
+TABLE IX: Selected Semgrep rules for each CWE type
+CWE-401
+
+semgrep-rules/c/mismatched-memory-management-cpp.yaml, semgrep-rules/c/mismatched-memory-management.yaml
+
+CWE-416
+
+r/cpp.lang.security.containers.std-vector-invalidation.std-vector-invalidation
+r/cpp.lang.security.strings.return-c-str.return-c-str, r/c.lang.security.use-after-free.use-after-free
+r/cpp.lang.security.strings.string-view-temporary-string.string-view-temporary-string
+r/cpp.lang.security.use-after-free.local-variable-malloc-free.local-variable-malloc-free
+r/cpp.lang.security.use-after-free.local-variable-new-delete.local-variable-new-delete
+r/c.lang.security.function-use-after-free.function-use-after-free
+
+CWE-476
+
+r/cpp.lang.security.memory.null-deref.null-library-function.null-library-function
+
+CWE-022
+
+r/java.jax-rs.security.jax-rs-path-traversal.jax-rs-path-traversal, r/java.lang.security.httpservlet-path-traversal.httpservlet-path-traversal
+r/java.micronaut.path-traversal.file-access-taint-msg.file-access-taint-msg, r/java.micronaut.path-traversal.file-access-taint-sls.file-access-taint-sls
+r/java.micronaut.path-traversal.file-access-taint-ws.file-access-taint-ws, r/java.micronaut.path-traversal.file-access-taint.file-access-taint
+r/java.micronaut.path-traversal.file-taint-msg.file-taint-msg, r/java.micronaut.path-traversal.file-taint-sls.file-taint-sls
+r/java.micronaut.path-traversal.file-taint-ws.file-taint-ws, r/java.micronaut.path-traversal.file-taint.file-taint
+r/java.servlets.security.httpservlet-path-traversal-deepsemgrep.httpservlet-path-traversal-deepsemgrep
+r/java.servlets.security.httpservlet-path-traversal.httpservlet-path-traversal
+r/java.spring.spring-tainted-path-traversal.spring-tainted-path-traversal
+r/gitlab.find sec bugs.FILE UPLOAD FILENAME-1, r/gitlab.find sec bugs.PATH TRAVERSAL IN-1
+r/gitlab.find sec bugs.PATH TRAVERSAL OUT-1.PATH TRAVERSAL OUT-1, r/gitlab.find sec bugs.PT ABSOLUTE PATH TRAVERSAL-1
+r/gitlab.find sec bugs.PT RELATIVE PATH TRAVERSAL-1, r/gitlab.find sec bugs.WEAK FILENAMEUTILS-1
+
+CWE-078
+
+r/java.lang.security.audit.command-injection-formatted-runtime-call.command-injection-formatted-runtime-call
+r/java.lang.security.audit.command-injection-process-builder.command-injection-process-builder
+r/java.micronaut.command-injection.tainted-system-command-msg.tainted-system-command-msg
+r/java.micronaut.command-injection.tainted-system-command-sls.tainted-system-command-sls,
+r/java.micronaut.command-injection.tainted-system-command-ws.tainted-system-command-ws
+r/java.micronaut.command-injection.tainted-system-command.tainted-system-command
+r/java.servlets.security.tainted-cmd-from-http-request-deepsemgrep.tainted-cmd-from-http-request-deepsemgrep
+r/java.servlets.security.tainted-cmd-from-http-request.tainted-cmd-from-http-request
+java.spring.command-injection.tainted-system-command.tainted-system-command
+r/java.spring.simple-command-injection-direct-input.simple-command-injection-direct-input
+r/java.lang.security.audit.tainted-cmd-from-http-request.tainted-cmd-from-http-request
+r/java.spring.security.injection.tainted-system-command.tainted-system-command
+r/gitlab.find sec bugs.COMMAND INJECTION-1, r/mobsf.mobsfscan.injection.command injection.command injection
+r/mobsf.mobsfscan.injection.command injection formated.command injection warning
+
+CWE-079
+
+java.lang.security.audit.xss.no-direct-response-writer.no-direct-response-writer
+java.lang.security.servletresponse-writer-xss.servletresponse-writer-xss, java.micronaut.xss.direct-response-write.direct-response-write
+java.servlets.security.no-direct-response-writer-deepsemgrep.no-direct-response-writer-deepsemgrep
+java.servlets.security.no-direct-response-writer.no-direct-response-writer, java.micronaut.xss.direct-response-write.direct-response-write
+java.servlets.security.servletresponse-writer-xss-deepsemgrep.servletresponse-writer-xss-deepsemgrep
+java.servlets.security.servletresponse-writer-xss.servletresponse-writer-xss
+java.spring.tainted-html-string-responsebody.tainted-html-string-responsebody
+
+CWE-094
+
+r/gitlab.find sec bugs.TEMPLATE INJECTION PEBBLE-1.TEMPLATE INJECTION FREEMARKER-1.TEMPLATE INJECTION VELOCITY-1,
+r/gitlab.find sec bugs.SCRIPT ENGINE INJECTION-1.SPEL INJECTION-1.EL INJECTION-2.SEAM LOG INJECTION-1
+r/java.lang.security.audit.el-injection.el-injection, r/java.lang.security.audit.ognl-injection.ognl-injection
+r/java.lang.security.audit.script-engine-injection.script-engine-injection, r/java.spring.security.audit.spel-injection.spel-injection
+
+Semgrep
+
+3
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+4
+
+TABLE X: Details of token consumption, analysis runtime for all C/C++ projects
+CWE Type
+
+Repository Name
+
+linux/sound
+
+CWE-401
+
+linux/mm
+
+ImageMagic
+
+linux/net
+
+CWE-416
+
+linux/drivers/net
+
+vim
+
+linux/drivers/peci
+
+CWE-476
+
+gpac
+
+bitlbee
+
+Size (KLOC)
+
+Tool
+
+Input Tokens (K)
+
+Output Tokens (K)
+
+Time (min)
+
+1,253.23
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+23748.25
+61.41
+-
+
+5700.42
+16.48
+-
+
+814.78
+131.33
+4.08
+0.18
+
+133.95
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+20009.25
+61.41
+-
+
+4636.56
+16.48
+-
+
+2450.41
+128.53
+0.58
+0.07
+
+680.88
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+68233.39
+61.41
+-
+
+3794.81
+16.48
+-
+
+197.53
+37.55
+3.39
+0.14
+
+962.14
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+2735.89
+185.25
+-
+
+102.44
+47.92
+-
+
+7.02
+219.84
+2.85
+0.80
+
+3,924.62
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+748.51
+185.25
+-
+
+198.80
+47.92
+-
+
+21.69
+221.51
+14.08
+2.43
+
+1,192.93
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+24656.59
+185.25
+-
+
+2916.95
+47.92
+-
+
+67.18
+123.62
+1.75
+0.45
+
+1.72
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+1547.98
+127.52
+-
+
+211.58
+45.26
+-
+
+30.65
+196.73
+0.21
+0.07
+
+859.53
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+38530.07
+127.52
+-
+
+3413.36
+45.26
+-
+
+132.64
+132.20
+378.95
+0.20
+
+33.65
+
+RepoAudit
+KNighter
+CodeQL
+Semgrep
+
+225493.97
+127.52
+-
+
+38,078,26
+45.26
+-
+
+312.87
+105.46
+0.37
+0.10
+
+JOURNAL OF LATEX CLASS FILES, VOL. 18, NO. 9, OCTOBER 2025
+
+5
+
+TABLE XI: Details of token consumption, analysis runtime for all Java projects
+CWE Type
+
+CWE-022
+
+Repository Name
+
+Size (KLOC)
+
+Tool
+
+Input Tokens (K)
+
+Output Tokens (K)
+
+Time (min)
+
+OpenOLAT
+
+1,907.08
+
+IRIS
+CodeQL
+Semgrep
+
+1,752.77
+-
+
+267.13
+-
+
+103.40
+15.69
+1.96
+
+11.94
+
+IRIS
+CodeQL
+Semgrep
+
+8.47
+-
+
+1.45
+-
+
+2.55
+3.50
+0.61
+
+448.03
+
+IRIS
+CodeQL
+Semgrep
+
+676.20
+-
+
+95.93
+-
+
+37.03
+15.42
+0.94
+
+76.34
+
+IRIS
+LLMDFA
+CodeQL
+Semgrep
+
+116.92
+18,716.58
+-
+
+211.99
+778.23
+-
+
+10.70
+993.00
+1.74
+0.58
+
+238.59
+
+IRIS
+LLMDFA
+CodeQL
+Semgrep
+
+91.55
+2,748.90
+-
+
+20.06
+69.50
+-
+
+8.02
+44.00
+3.27
+0.75
+
+228.31
+
+IRIS
+LLMDFA
+CodeQL
+Semgrep
+
+468.01
+18,499.28
+-
+
+99.10
+1,459.38
+-
+
+32.45
+1654.00
+9.24
+0.90
+
+5,553.10
+
+IRIS
+LLMDFA
+CodeQL
+Semgrep
+
+927.21
+23,864.02
+-
+
+188.67
+1,994.81
+-
+
+60.48
+4638.00
+12.33
+1.12
+
+300.49
+
+IRIS
+LLMDFA
+CodeQL
+Semgrep
+
+463.74
+2,535.12
+-
+
+79.21
+245.51
+-
+
+24.32
+530.00
+4.64
+0.38
+
+6,033.86
+
+IRIS
+LLMDFA
+CodeQL
+Semgrep
+
+921.60
+38,310.33
+-
+
+154.35
+2,646.89
+-
+
+177.87
+4141.00
+14.33
+0.57
+
+552.49
+
+IRIS
+CodeQL
+Semgrep
+
+172.56
+-
+
+36.25
+-
+
+11.32
+7.15
+0.61
+
+activemq
+
+611.96
+
+IRIS
+CodeQL
+Semgrep
+
+488.44
+-
+
+85.97
+-
+
+2089.47
+6.78
+0.39
+
+cron-utils
+
+16.24
+
+IRIS
+CodeQL
+Semgrep
+
+17.79
+-
+
+3.08
+-
+
+3.67
+0.96
+0.24
+
+sql2o
+
+8.03
+
+INFERROI
+CodeQL
+
+142.50
+-
+
+64.51
+-
+
+20.25
+1.49
+
+RxJava
+
+325.39
+
+INFERROI
+CodeQL
+
+2,871.49
+-
+
+1,408.23
+-
+
+176.27
+7.23
+
+jsoup
+
+38.13
+
+INFERROI
+CodeQL
+
+566.37
+-
+
+254.78
+-
+
+37.76
+1.04
+
+spark
+
+Dspace
+
+xstream
+
+CWE-078
+
+workflow-cps-plugin
+
+tika
+
+xwiki-platform
+
+CWE-079
+
+jenkins
+
+keycloak
+
+onedev
+
+CWE-094
+
+CWE-722
+
+

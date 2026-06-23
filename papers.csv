@@ -1,0 +1,42 @@
+简称,标题,作者,年份,venue,arXiv/DOI,子方向,横轴-补偿目标,纵轴-健全性代价,就绪度-可编译性,就绪度-云端依赖,就绪度-可解释性,就绪度-真实代码库,目标语言,是否静态,是否处理可达性,关键数字,必引
+VFArche,"VFArche: Version-Function Aware Reachability Verification for Open-Source Component Vulnerabilities",Zhang et al.,2025,arXiv,2506.18050,② SCA,版本与可达性的鸿沟,只剪误报,,是,,,Java/Python,是,是,,是
+Vercation,"VERCATION: Version- and Reachability-based Verification of Open-Source Component Vulnerabilities",Cheng et al.,2024,arXiv,2408.07321,② SCA,版本与可达性的鸿沟,只剪误报,,是,,,Java,是,是,F1 92.4% / 发现NVD 134处版本错误 / 28.6s/漏洞,是
+Veracode-Dynamics,"Veracode Dynamics: A Framework for Static and Dynamic Analysis of Open-Source Components",Foo et al.,2019,arXiv,1909.00973,② SCA,调用图不完整(可达性),只补漏报,,,,,Java,否,是,,否
+Patch-Localization,"Patch Localization for Vulnerability Remediation via LLM-based Analysis",Yu et al.,2024,arXiv,2409.06816,② SCA,版本与可达性的鸿沟,只剪误报,,,,,C/C++,是,否,,否
+Similar-but-Patched,"Similar but Patched: Detecting Patched Vulnerabilities in Open-Source Components",Tan et al.,2025,arXiv,2412.20740,② SCA,版本与可达性的鸿沟,只剪误报,,,,,C/C++,,否,,否
+Sheng-Survey,"Large Language Models for Software Security: A Survey of Vulnerability Detection, Repair, and Beyond",Sheng et al.,2025,arXiv,2502.07049,① 综述,,,,,,,,,,,是
+Basic-Survey,"From Vulnerabilities to Remediation: A Comprehensive Survey of AI-Augmented Software Security",Basic et al.,2024,arXiv,2412.15004,① 综述,,,,,,,,,,,否
+Wang-Program-Analysis,"Large Language Models for Program Analysis: A Survey",Wang et al.,2025,arXiv,2502.18474,① 综述,,,,,,,,,,,是
+保守分析,"Complementary Security: A Conservative Approach to False Positive Reduction in SAST",Wagner et al.,2025,arXiv,2506.16899,③ 消减误报,模式不精确(误报),零漏报保证,,否,,,C/C++,否,否,,是
+ZeroFalse,"ZeroFalse: Towards Zero False Positives in Static Analysis via LLM-Based Verification",Iranmanesh et al.,2025,arXiv,2510.02534,③ 消减误报,模式不精确(误报),两者兼顾,,是,,,C/C++,否,否,,否
+LLM4PFA,"LLM4PFA: Large Language Models for Path Feasibility Analysis in Static Analysis",Du et al.,2025,arXiv,2506.10322,③ 消减误报,调用图不完整(可达性),只剪误报,,是,,,C/C++,否,是,,否
+LLM4FPM,"LLM4FPM: Large Language Models for False Positive Mitigation in Static Analysis",Chen et al.,2024,arXiv,2411.03079,③ 消减误报,模式不精确(误报),只剪误报,,是,,,Python,否,否,,否
+Sifting-the-Noise,"Sifting the Noise: A Comparative Study of LLM Agents in Vulnerability False Positive Reduction",Xiong et al.,2026,arXiv,2601.22952,③ 消减误报,模式不精确(误报),只剪误报(可能引入漏报),否,是,部分,是,Java,否,否,"FPR 98.3%→6.3%(消减92.1%) / FN 22.25%(密码学CWE>50%) / 首次系统量化健全性代价 / $0.003-0.19/任务",是
+IRIS,"IRIS: LLM-Assisted Static Analysis for Detecting Security Vulnerabilities",Li et al.,2024,ICLR 2025,2405.17238,④ LLM+图,污点规范缺失+模式不精确,只剪误报(可能引入漏报),是,是,部分,是,Java,否,是,"检测55/120(+103.7% vs CodeQL 27) / FDR 84.82%(↓5.21pp) / 发现4个0-day / CWE-Bench-Java 120项目 / DSC 7B检测52个",是
+LLMxCPG,"LLMxCPG: Large Language Model-Enhanced Code Property Graph for Vulnerability Detection",Lekssays et al.,2025,arXiv,2507.16585,④ LLM+图,调用图不完整(可达性),只补漏报,,是,,,C/C++,否,是,,否
+LocAgent,"LocAgent: Graph-Based Agent for Code Localization via LLM-Enhanced Search",Chen et al.,2025,arXiv,2503.09089,④ LLM+图,调用图不完整(可达性),只补漏报,,是,,,多语言,否,是,,否
+Boosting-Pointer,"Boosting Pointer Analysis with Large Language Models",Cheng et al.,2025,arXiv,2509.22530,④ LLM+图,调用图不完整(可达性),只补漏报,,否,,,C/C++,是,是,,否
+T2L-Agent,"T2L-Agent: From Trace to Location — An LLM Agent for Vulnerability Localization",Xi et al.,2025,arXiv,2510.02389,⑤ 智能体,版本与可达性的鸿沟,只剪误报,,是,,,C/C++,,是,,否
+CVE-Genie,"CVE-Genie: Automated Vulnerability Analysis and Reproduction via LLM Agents",Ullah et al.,2025,arXiv,2509.01835,⑤ 智能体,版本与可达性的鸿沟,只剪误报,,是,,,多语言,,是,,否
+CleanVul,"CleanVul: A Clean and Comprehensive Dataset for Vulnerability Detection",Li et al.,2024,arXiv,2411.17274,⑥ 评测,数据与标注质量,,,否,,,,C/C++,,,否
+DiverseVul,"DiverseVul: A New Vulnerable Source Code Dataset for Deep Learning Based Vulnerability Detection",Chen et al.,2023,arXiv,2304.00409,⑥ 评测,数据与标注质量,,,否,,,,C/C++,,,否
+Eval-Line,"Evaluating the Effectiveness of Deep Learning Models for Line-Level Vulnerability Detection",Zhang et al.,2024,arXiv,2404.00287,⑥ 评测,数据与标注质量,,,,,,C/C++,,,否
+Croft-DataQuality,"Data Quality for Software Vulnerability Datasets",Croft et al.,2023,ICSE,10.1109/ICSE48619.2023.00022,⑥ 评测,数据与标注质量,,,否,,,,C/C++,,,否
+Pearce-ZeroShot,"An Empirical Study on Zero-Shot Vulnerability Repair with Large Language Models",Pearce et al.,2021,arXiv,2112.02125,早期,模式不精确(误报),,,,,,C/C++,,,否
+Fu-ChatGPT,"How Far Have We Gone in Vulnerability Detection Using Large Language Models",Fu et al.,2023,arXiv,2310.09810,早期,模式不精确(误报),,,,,,多语言,,,否
+Gao-How-Far,"How Far Have We Gone in LLM-Based Vulnerability Detection: A Comprehensive Study",Gao et al.,2023,arXiv,2311.12420,早期,模式不精确(误报),,,,,,C/C++,,,否
+Ullah-Cannot-Reliably,"Large Language Models Cannot Reliably Identify and Reason About Security Vulnerabilities",Ullah et al.,2023,arXiv,2312.12575,早期,模式不精确(误报),,,,,,多语言,,,否
+Zhang-Prompt,"Prompt-Enhanced Vulnerability Detection with Large Language Models",Zhang et al.,2023,arXiv,2308.12697,早期,模式不精确(误报),,,,,,C/C++,,,否
+Chan-EditTime,"EditTime: Time-Aware Bug Detection and Repair with Language Models",Chan et al.,2023,arXiv,2306.01754,早期,模式不精确(误报),,,,,,Java,,,否
+Xu-CodeLLMEval,"A Systematic Evaluation of Large Language Models for Code Generation and Analysis",Xu et al.,2022,arXiv,2202.13169,早期,模式不精确(误报),,,,,,多语言,,,否
+Sobania-ChatGPT,"An Analysis of ChatGPT's Bug Fixing Capabilities",Sobania et al.,2023,arXiv,2301.08653,早期,模式不精确(误报),,,,,,多语言,,,否
+Vul-RAG,"Vul-RAG: Enhancing LLM-based Vulnerability Detection via Knowledge-level RAG",Du et al.,2025,arXiv,2406.11147,① 综述,模式不精确(误报),只补漏报,,是,,,C/C++,,否,,否
+MSIVD,"Security Vulnerability Detection with Multitask Self-Instructed Fine-Tuning of Large Language Models",Yang et al.,2024,arXiv,2406.05892,① 综述,模式不精确(误报),只补漏报,,是,,,C/C++,,否,,否
+Beyond-ChatGPT,"Beyond ChatGPT: Enhancing Software Quality Assurance Tasks with Diverse LLMs and Validation Techniques",Widyasari et al.,2024,arXiv,2409.01001,① 综述,模式不精确(误报),两者兼顾,,是,,,多语言,,否,,否
+LLM-SmartAudit,"LLM-SmartAudit: Advanced Smart Contract Vulnerability Detection",Wei et al.,2024,arXiv,2410.09381,① 综述,模式不精确(误报),只补漏报,,是,,,Solidity,,否,,否
+SemTaint,"SemTaint: LLM-Assisted Taint Analysis for Resolving Unresolvable Call Edges in JavaScript",Ghebremichael et al.,2026,arXiv,,④ LLM+图,调用图不完整(可达性),两者兼顾但无零漏报,是,是,部分,是,JavaScript,是,是,"CodeQL静态解析40.3%调用边 / 恢复106/162漏报(65.4%) / TICR减少LLM调用94.5%",否
+Bridging,"Bridging Structure and Semantics: A GNN-Guided LLM Framework for Java Vulnerability Detection",Gajjar et al.,2025,arXiv,,④ LLM+图,模式不精确(误报),两者兼顾但无零漏报,否,否,是,部分,Java,否,否,"93.57%准确率(35,610样本) / <4B本地模型 / 比纯GAT高8.36% / 比零样本Qwen2.5高17.81%",否
+SecureFixAgent,"SecureFixAgent: A Hybrid LLM Agent for Automated Python Static Vulnerability Repair",Gajjar et al.,2025,arXiv,,③ 消减误报,模式不精确(误报),只剪误报,否,否,是,否,Python,否,否,"Fix Acc 87.83% / FP 8.11% / <8B本地LLM+LoRA / 迭代3轮收敛 / 开发者评分4.5/5",否
+SAVANT,"SAVANT: Semantic-Aware Vulnerability Assessment for Networked Technologies via LLM-Enhanced Contextual Analysis",Lingxiang et al.,2025,arXiv,,② SCA,版本与可达性的鸿沟,只剪误报,是,是,部分,部分,Java,否,是,,否
+LLM4FPM-real,"LLM4FPM: Utilizing Precise and Complete Code Context to Guide LLM in Automatic False Positive Mitigation",Chen et al.,2024,arXiv,2411.03079,③ 消减误报,模式不精确(误报),只剪误报,否,是,否,部分,Python,否,否,,否
+AdaTaint,"AdaTaint: Adaptive Neural-Symbolic Taint Analysis with LLM-Guided Constraint Solving",Lin et al.,2025,arXiv,,③ 消减误报,污点规范缺失+模式不精确,两者兼顾,是,是,部分,是,,是,是,,否

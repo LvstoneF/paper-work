@@ -1,4 +1,14 @@
-V-SZZ(DOI)  |  DOI:10.1109/ICSE43902.2022.9794006  |  https://doi.org/10.1109/ICSE43902.2022.9794006
-LLM4SA(DOI)  |  DOI:10.1145/3653718  |  https://doi.org/10.1145/3653718
-GRACE(DOI)  |  DOI:10.1016/j.jss.2024.112031  |  https://doi.org/10.1016/j.jss.2024.112031
-LineVul(DOI)  |  DOI:10.1145/3524842.3528452  |  https://doi.org/10.1145/3524842.3528452
+=== DOI-only, paywalled (no arXiv preprint found) ===
+V-SZZ (Bao et al., ICSE 2022)  |  DOI:10.1109/ICSE43902.2022.9794006  |  方向②  |  耀富
+LineVul (Fu & Tantithamthavorn, MSR 2022)  |  DOI:10.1145/3524842.3528452  |  early/⑥  |  共享
+
+=== 进虎负责 (方向③④), 未下载 ===
+LLM4SA (Wen 2024)  |  DOI:10.1145/3653718
+GRACE (Lu 2024)  |  DOI:10.1016/j.jss.2024.112031
+
+=== 已下载汇总 (非进虎) ===
+方向① 综述+检测增强: 7篇 ✅
+方向② SCA: 8篇 ✅
+方向⑤ Agent: 6篇 ✅
+方向⑥ 评测: 7篇 ✅
+early: 8篇 ✅

@@ -39,7 +39,7 @@
 | 7 | zhang:2025 (VFArche) | 2025 | ★ | ✅ | [VFArche_精读.md](../paper-analysis/VFArche_精读.md) |
 | 8 | yu:2024 (Patch Localization) | 2024 | | ⬜ | — |
 | 9 | cheng:2024 (VERCATION) | 2024 | ★ | ✅ | [VERCATION_精读.md](../paper-analysis/VERCATION_精读.md) |
-| 10 | lingxiang:2025 (SAVANT) | 2025 | ◆ | ⬜ | — |
+| 10 | lingxiang:2025 (SAVANT) | 2025 | ◆ | ✅ | [SAVANT_精读.md](../paper-analysis/SAVANT_精读.md) |
 | 11 | zhang:2025 (DGA) | 2025 | | ⬜ | — |
 | 12 | chang:2025 (SLICEMATE) | 2025 | | ⬜ | — |
 
@@ -52,7 +52,7 @@
 | 15 | chen:2024 (LLM4FPM) | 2024 | | ⬜ | — |
 | 16 | wagner:2025 (保守分析) | 2025 | ★ | ✅ | [保守分析_Complementary-Security_精读.md](../paper-analysis/保守分析_Complementary-Security_精读.md) |
 | 17 | iranmanesh:2025 (ZeroFalse) | 2025 | | ⬜ | — |
-| 18 | xiong:2026 (Sifting) | 2026 | ★ | ⬜ | — |
+| 18 | xiong:2026 (Sifting) | 2026 | ★ | ✅ | [Sifting-the-Noise_精读.md](../paper-analysis/Sifting-the-Noise_精读.md) |
 | 19 | lin:2025 (AdaTaint) | 2025 | | ⬜ | — |
 | 20 | joos:2025 (CodeCureAgent) | 2025 | | ⬜ | — |
 | 21 | agrawal:2025 (SAST-Genius) | 2025 | | ⬜ | — |
@@ -63,15 +63,15 @@
 
 | # | 简称 | 年份 | 标记 | 状态 | 精读笔记 |
 |---|------|------|------|:--:|:---|
-| 24 | li:2024 (IRIS) | 2024 | ★ | ⬜ | — |
+| 24 | li:2024 (IRIS) | 2024 | ★ | ✅ | [IRIS_精读.md](../paper-analysis/IRIS_精读.md) |
 | 25 | lekssays:2025 (LLMxCPG) | 2025 | | ⬜ | — |
 | 26 | chen:2025 (LocAgent) | 2025 | | ⬜ | — |
-| 27 | cheng:2025 (Boosting) | 2025 | | ⬜ | — |
+| 27 | cheng:2025 (Boosting) | 2025 | | ✅ | [Boosting-Pointer_精读.md](../paper-analysis/Boosting-Pointer_精读.md) |
 | 28 | wang:2024 (LLMDFA) | 2024 | | ⬜ | — |
 | 29 | lu:2024 (GRACE) | 2024 | | ⬜ | — |
 | 30 | ghebremichael:2026 (SemTaint) | 2026 | ◆ | ⬜ | — |
-| 31 | liu:2024 (Vul-LMGNNs) | 2025 | | ⬜ | — |
-| 32 | wang:2025 (VulAgent) | 2025 | | ⬜ | — |
+| 31 | liu:2024 (Vul-LMGNNs) | 2025 | | ✅ | [Vul-LMGNNs_精读.md](../paper-analysis/Vul-LMGNNs_精读.md) |
+| 32 | wang:2025 (VulAgent) | 2025 | | ✅ | [VulAgent_精读.md](../paper-analysis/VulAgent_精读.md) |
 | 33 | khatun:2025 (AndroByte) | 2025 | | ⬜ | — |
 | 34 | gajjar:2025 (Bridging) | 2025 | ◆ | ⬜ | — |
 
@@ -79,7 +79,7 @@
 
 | # | 简称 | 年份 | 标记 | 状态 | 精读笔记 |
 |---|------|------|------|:--:|:---|
-| 35 | xi:2025 (T2L-Agent) | 2025 | | ⬜ | — |
+| 35 | xi:2025 (T2L-Agent) | 2025 | | ✅ | [T2L-Agent_精读.md](../paper-analysis/T2L-Agent_精读.md) |
 | 36 | ullah:2025 (CVE-Genie) | 2025 | | ⬜ | — |
 | 37 | sun:2026 (VIPER-MCP) | 2026 | ◆ | ⬜ | — |
 | 38 | shaikh:2026 (FORGE) | 2026 | | ⬜ | — |
@@ -121,13 +121,13 @@
 | 方向 | 总数 | 已完成 | 进度 |
 |:---|:---:|:---:|:---:|
 | ① 综述 | 3 | 0 | 0% |
-| ② SCA 可达性 | 9 | 2 | 22% |
-| ③ LLM 消减误报 | 11 | 1 | 9% |
-| ④ LLM+图 | 11 | 0 | 0% |
-| ⑤ Agent | 6 | 0 | 0% |
+| ② SCA 可达性 | 9 | 3 | 33% |
+| ③ LLM 消减误报 | 11 | 3 | 27% |
+| ④ LLM+图 | 11 | 5 | 45% |
+| ⑤ Agent | 6 | 1 | 17% |
 | ⑥ 数据集 | 7 | 0 | 0% |
 | 早期 | 9 | 0 | 0% |
-| **合计** | **~52** | **3** | **6%** |
+| **合计** | **~52** | **12** | **23%** |
 
 ---
 
@@ -137,3 +137,10 @@
 |:---|:---|
 | 2025-06-23 | 初始化知识库，回填 VFArche + VERCATION 两篇精读 |
 | 2026-06-23 | 完成保守分析（wagner2025）精读，方向③ 首篇；D3 标杆论文 |
+| 2026-06-23 | 完成 IRIS 精读，方向④ 首篇；必引锚点 4/5；神经符号范式里程碑 |
+| 2026-06-23 | 完成 Sifting the Noise 精读，方向③ 第 2 篇；**必引锚点 5/5 全部完成**；首次系统量化智能体 FP 消减的健全性代价（FN 22.25%） |
+| 2026-06-23 | 完成 SAVANT 精读，方向② 第 3 篇；**知识库中唯一直接组合 Java SCA+LLM+可达性**；印证议程 1 可行性并暴露其空白 |
+| 2026-06-23 | 完成 VulAgent 精读，方向④ 第 5 篇；**多智能体假设验证降误报**；FPR 降至 36.8%/55.4%但无零漏报保证，暴露议程 3/2 空白 |
+| 2026-06-23 | 完成 Boosting Pointer Analysis 精读，方向④ 第 4 篇；C 语言 CAF 检测 + LLM 辅助指针分析；为议程 2（离线小模型）提供存在性证明，暴露议程 4（跨语言动态分发）的 C-vs-Java 差异 |
+| 2026-06-23 | 完成 Vul-LMGNNs 精读，方向④ 第 6 篇；CodeLM+GNN+在线知识蒸馏联合训练，函数级漏洞分类；在 DiverseVul 上 F1 超基线 10%，但全 C/C++、无动态分发、无离线部署考量，暴露议程 2/4/3 空白 |
+| 2026-06-23 | 完成 T2L-Agent 精读，方向⑤ 首篇；**D4● 动态验证标杆**；崩溃 trace→行级定位；C/C++ 仅限、不涉 Java SCA/动态分发，印证议程 1 但暴露其「不可编译离线场景无人覆盖」空白 |
