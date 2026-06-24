@@ -17,14 +17,19 @@ import matplotlib.font_manager as fm
 import matplotlib.patches as mpatches
 import numpy as np
 
-# 配置 CJK 字体
-_cjk_fonts = [f for f in fm.findSystemFonts() if "Noto" in f and ("CJK" in f or "Sans" in f)]
-if _cjk_fonts:
-    _prop = fm.FontProperties(fname=_cjk_fonts[0])
-    plt.rcParams["font.family"] = _prop.get_name()
-else:
-    # Fallback: try to find any available CJK font
-    plt.rcParams["font.family"] = "sans-serif"
+# 配置 CJK 字体(跨平台:Windows / macOS / Linux 按优先级 fallback)
+plt.rcParams["font.sans-serif"] = [
+    "Microsoft YaHei",      # Windows 默认中文(微软雅黑)
+    "SimHei",               # Windows fallback(黑体)
+    "SimSun",               # Windows fallback(宋体)
+    "PingFang SC",          # macOS 默认中文
+    "Hiragino Sans GB",     # macOS fallback
+    "Noto Sans CJK SC",     # Linux Noto
+    "WenQuanYi Zen Hei",    # Linux fallback
+    "DejaVu Sans",          # 兜底
+]
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["axes.unicode_minus"] = False  # 防止负号显示为方块
 
 # ── 轴定义 ──────────────────────────────────────────
 X_CATEGORIES = [

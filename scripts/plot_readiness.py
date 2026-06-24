@@ -16,13 +16,19 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import numpy as np
 
-# 配置 CJK 字体
-_cjk_fonts = [f for f in fm.findSystemFonts() if "Noto" in f and ("CJK" in f or "Sans" in f)]
-if _cjk_fonts:
-    _prop = fm.FontProperties(fname=_cjk_fonts[0])
-    plt.rcParams["font.family"] = _prop.get_name()
-else:
-    plt.rcParams["font.family"] = "sans-serif"
+# 配置 CJK 字体(跨平台:Windows / macOS / Linux 按优先级 fallback)
+plt.rcParams["font.sans-serif"] = [
+    "Microsoft YaHei",      # Windows 默认中文(微软雅黑)
+    "SimHei",               # Windows fallback(黑体)
+    "SimSun",               # Windows fallback(宋体)
+    "PingFang SC",          # macOS 默认中文
+    "Hiragino Sans GB",     # macOS fallback
+    "Noto Sans CJK SC",     # Linux Noto
+    "WenQuanYi Zen Hei",    # Linux fallback
+    "DejaVu Sans",          # 兜底
+]
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["axes.unicode_minus"] = False  # 防止负号显示为方块
 
 # ── 就绪度维度 ─────────────────────────────────────
 READINESS_DIMS = [
@@ -137,7 +143,8 @@ def plot_readiness(csv_path: str, output_path: str):
         for j in range(len(READINESS_DIMS)):
             val = data_matrix[i, j]
             text_color = "white" if val < 0.4 or val > 0.6 else "black"
-            label = {0.0: "✗", 1.0: "✓", 0.5: "?", 0.25: "?"}.get(val, "?")
+            # 用 √ × 替代 ✓ ✗,前者在 Microsoft YaHei 等中文字体中支持,后者不支持
+            label = {0.0: "×", 1.0: "√", 0.5: "?", 0.25: "?"}.get(val, "?")
             ax.text(j, i, label, ha="center", va="center",
                    fontsize=9, fontweight="bold", color=text_color)
 
@@ -150,7 +157,7 @@ def plot_readiness(csv_path: str, output_path: str):
     ax.set_xticks(range(len(READINESS_DIMS)))
     ax.set_xticklabels(READINESS_DIMS, fontsize=10)
     ax.set_title(f"部署就绪度热力图 ({n_papers} 篇论文)\n"
-                 "✓=满足  ?=未知/部分  ✗=不满足",
+                 "√=满足  ?=未知/部分  ×=不满足",
                  fontsize=13, fontweight="bold")
 
     # Colorbar
